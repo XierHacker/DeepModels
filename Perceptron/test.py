@@ -5,7 +5,7 @@ from perceptron import Perceptron
 
 
 train_frame=pd.read_csv("../TestData/MNIST/train.csv")
-test_frame=pd.read_csv("../TestData/MNIST/test.csv")
+#test_frame=pd.read_csv("../TestData/MNIST/test.csv")
 #pop the labels and one-hot coding
 train_labels_frame=train_frame.pop("label")
 train_labels_frame=pd.get_dummies(data=train_labels_frame)

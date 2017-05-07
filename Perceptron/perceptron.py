@@ -23,8 +23,7 @@ class Perceptron():
     def forward(self,X):
         with self.graph.as_default():
             logits=tf.matmul(X,self.weights)+self.biases
-            prob=tf.nn.softmax(logits)
-        return prob
+        return logits
 
     #training
     def fit(self,X,y,epochs=10,batch_size=200,print_log=True):
@@ -43,9 +42,9 @@ class Perceptron():
         with self.graph.as_default():
             X_p=tf.placeholder(dtype=tf.float32,shape=(None,cols))
             y_p=tf.placeholder(dtype=tf.float32,shape=(None,category))
-            prob=self.forward(X_p)
-            cross_ectropy=tf.reduce_mean(-tf.reduce_sum(input_tensor=y_p*tf.log(prob),reduction_indices=1))
-            optimizer=tf.train.GradientDescentOptimizer(0.05).minimize(cross_ectropy)
+            logits=self.forward(X_p)
+            cross_entropy=tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits,labels=y_p))
+            optimizer=tf.train.GradientDescentOptimizer(0.001).minimize(cross_entropy)
 
 
 
@@ -58,7 +57,7 @@ class Perceptron():
                 print("epoch:",epoch)
                 #mini batch
                 for i in range(0,rows,batch_size):
-                    _,loss=sess.run(fetches=[optimizer,cross_ectropy],
+                    _,loss=sess.run(fetches=[optimizer,cross_entropy],
                                     feed_dict={X_p:X[train_index[i:i+batch_size]],y_p:y[train_index[i:i+batch_size]]})
                     print("loss:",loss)
 
