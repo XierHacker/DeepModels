@@ -25,7 +25,7 @@ class Perceptron():
         return logits
 
     #training
-    def fit(self,X,y,epochs=10,batch_size=200,print_log=True):
+    def fit(self,X,y,epochs=5,batch_size=100,print_log=True):
         #num of samples,features and category
         rows=X.shape[0]
         cols=X.shape[1]
@@ -54,28 +54,33 @@ class Perceptron():
 
             print("------------traing start-------------")
             for train_index,validation_index in indices:
+                trainDataSize=train_index.shape[0]
+                validationDataSize=validation_index.shape[0]
                 print("epoch:",epoch)
                 #average train loss
                 train_losses=[]
                 #average validation loss
                 validation_losses=[]
                 #mini batch
-                for i in range(0,rows,batch_size):
-                    _,train_loss=sess.run(fetches=[optimizer,cross_entropy],feed_dict={X_p:X[train_index[i:i+batch_size]],y_p:y[train_index[i:i+batch_size]]})
-                  #  validation_loss=sess.run(fetches=cross_entropy,feed_dict={X_p:X[validation_index],y_p:y[validation_index]})
+                for i in range(0,(trainDataSize//batch_size)):
+                    _,train_loss=sess.run(fetches=[optimizer,cross_entropy],
+                                          feed_dict={X_p:X[train_index[i*batch_size:(i+1)*batch_size]],y_p:y[train_index[i*batch_size:(i+1)*batch_size]]})
+                    validation_loss=sess.run(fetches=cross_entropy,
+                                             feed_dict={X_p:X[validation_index],y_p:y[validation_index]})
 
-                    #train_losses.append(train_loss)
-                    #validation_losses.append(validation_loss)
+                    train_losses.append(train_loss)
+                    validation_losses.append(validation_loss)
                     #print(train_losses)
                     #weather print training infomation
-                    #if(print_log):
-                     #   print("training loss:",train_loss)
-                      #  print("validation loss:",validation_loss)
-               # print(train_losses)
-                #ave_train_loss=sum(train_losses)/len(train_losses)
-                #ave_validation_loss=sum(validation_losses)/len(validation_losses)
-                #print("average training loss:",ave_train_loss)
-                #print("average validation loss:",ave_validation_loss)
+                    if(print_log):
+                        print("training loss:",train_loss)
+                        print("validation loss:",validation_loss)
+
+               # print("train_losses:",train_losses)
+                ave_train_loss=sum(train_losses)/len(train_losses)
+                ave_validation_loss=sum(validation_losses)/len(validation_losses)
+                print("average training loss:",ave_train_loss)
+                print("average validation loss:",ave_validation_loss)
                 epoch+=1
 
 
