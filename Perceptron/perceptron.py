@@ -86,7 +86,9 @@ class Perceptron():
 
 
     def predict(self,X):
-        pass
+        prob=self.predict_prob(X)
+        pred=tf.argmax(input=prob,axis=1)
 
     def predict_prob(self,X):
-        pass
+        prob=tf.nn.softmax(self.forward(X))
+        return prob
