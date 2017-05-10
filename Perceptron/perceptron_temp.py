@@ -7,13 +7,11 @@ train_frame=pd.read_csv("../TestData/MNIST/train.csv")
 #test_frame=pd.read_csv("../TestData/MNIST/test.csv")
 #pop the labels and one-hot coding
 train_labels_frame=train_frame.pop("label")
-train_labels_frame=pd.get_dummies(data=train_labels_frame)
-
-
 
 #print(train_frame.shape,train_labels_frame.shape)
 X=train_frame.values
 y=train_labels_frame.values
+
 
 
 #graph
@@ -30,9 +28,10 @@ with graph.as_default():
 
 #session
 with tf.Session(graph=graph) as sess:
+    y_dummy = pd.get_dummies(data=y).values
     sess.run(init_op)
     for i in range(20):
         print("epochs:",i)
         _,l=sess.run(fetches=[optimizer,loss],
-                        feed_dict={X_p:X[i*100:i*100+100],y_p:y[i*100:i*100+100]})
+                        feed_dict={X_p:X[i*100:i*100+100],y_p:y_dummy[i*100:i*100+100]})
         print(l)
