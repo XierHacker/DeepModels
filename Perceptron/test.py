@@ -12,4 +12,4 @@ train_labels_frame=pd.get_dummies(data=train_labels_frame)
 
 #load model
 percept=Perceptron()
-percept.fit(X=train_frame.values,y=train_labels_frame.values)
+percept.fit(X=train_frame.values,y=train_labels_frame.values,print_log=False)
