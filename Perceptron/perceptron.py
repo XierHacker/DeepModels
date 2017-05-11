@@ -58,35 +58,46 @@ class Perceptron():
 
         #SGD training
         epoch=1
-        with self.session as sess:
+        with self.session.as_default():
             #initialize all variables
-            sess.run(self.init)
+            self.session.run(self.init)
 
             print("------------traing start-------------")
             for train_index,validation_index in indices:
                 trainDataSize=train_index.shape[0]
                 validationDataSize=validation_index.shape[0]
                 print("epoch:",epoch)
-                #average train loss
+
+                #average train loss and validation loss
                 train_losses=[]
-                #average validation loss
                 validation_losses=[]
+
+                #average taing accuracy and validation accuracy
+                train_accus=[]
+                validation_accus=[]
+
+
                 #mini batch
                 for i in range(0,(trainDataSize//batch_size)):
-                    _,train_loss=sess.run(fetches=[optimizer,cross_entropy],
+                    _,train_loss=self.session.run(fetches=[optimizer,cross_entropy],
                                           feed_dict={X_p:X[train_index[i*batch_size:(i+1)*batch_size]],y_p:y_dummy[train_index[i*batch_size:(i+1)*batch_size]]})
-                    validation_loss=sess.run(fetches=[cross_entropy],
+                    validation_loss=self.session.run(fetches=cross_entropy,
                                              feed_dict={X_p:X[validation_index],y_p:y_dummy[validation_index]})
 
+                     #prediction in training process
+                    #train_pred=self.predict(X=X[train_index[i*batch_size:(i+1)*batch_size]])
+                    #validation_pred=self.predict(X=X[validation_index])
+
+                    #accuracy in training process
+                   # train_accuracy=self.accuracy(y_true=y[train_index[i*batch_size:(i+1)*batch_size]],y_pred=train_pred)
+                   # validation_accuracy=self.accuracy(y_true=y[validation_index],y_pred=validation_pred)
+
+                    #add to list to compute average value
                     train_losses.append(train_loss)
                     validation_losses.append(validation_loss)
+                   # train_accus.append(train_accuracy)
+                   # validation_accus.append(validation_accus)
 
-                    #prediction in training process
-                    train_pred=self.predict(X=X[train_index[i*batch_size:(i+1)*batch_size]])
-                    validation_pred=self.predict(X=X[validation_index])
-
-                    train_accuracy=self.accuracy(y_true=y[train_index[i*batch_size:(i+1)*batch_size]],y_pred=train_pred)
-                    validation_accuracy=self.accuracy(y_true=y[validation_index],y_pred=validation_pred)
 
                     #weather print training infomation
                     if(print_log):
@@ -98,17 +109,21 @@ class Perceptron():
                # print("train_losses:",train_losses)
                 ave_train_loss=sum(train_losses)/len(train_losses)
                 ave_validation_loss=sum(validation_losses)/len(validation_losses)
+              #  ave_train_accuracy=sum(train_accus)/len(train_accus)
+              #  ave_validation_accuracy=sum(validation_accus)/len(validation_accus)
                 print("average training loss:",ave_train_loss)
                 print("average validation loss:",ave_validation_loss)
+              #  print("average training accuracy:", ave_train_accuracy)
+              #  print("average validation accuracy:", ave_validation_accuracy)
                 epoch+=1
 
-
-
     def predict(self,X):
-        prob=self.predict_prob(X)
-        pred=tf.argmax(input=prob,axis=1)
+        with self.graph.as_default():
+            prob=self.predict_prob(X)
+            pred=tf.argmax(input=prob,axis=1)
+
         with self.session.as_default():
-            result=self.session.run(fetches=pred)
+            result=pred.eval()
             return result
 
     def predict_prob(self,X):
