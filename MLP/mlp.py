@@ -1,6 +1,5 @@
 '''
-    only have one output layer
-    the shape of weights and bias only define by the input features and output category
+two hidden layers,one output layers
 '''
 import tensorflow as tf
 import numpy as np
@@ -9,26 +8,75 @@ from sklearn.model_selection import ShuffleSplit
 from sklearn.metrics import accuracy_score
 
 
-class Perceptron():
-    def __init__(self):
+class MLP():
+    def __init__(self,num_hidden1_unit,num_hidden2_unit):
         #basic environment
         self.graph=tf.Graph()
         self.session=tf.Session(graph=self.graph)
 
+        #amount of neurals(units) in hidden layer 1 and 2
+        self.n_h1=num_hidden1_unit
+        self.n_h2=num_hidden2_unit
 
-    #add some variables or constant etc to a graph
+
+    #add some basic variables or constant to a graph
     def define_framewrok(self,num_of_features,num_of_category):
         with self.graph.as_default():
+            #full connected layer 1(fc1)
+            #weight(num_of_features x n_h1) and biases(n_h1,)
+            self.weights_fc1=tf.Variable(
+                        initial_value=tf.truncated_normal(shape=(num_of_features,self.n_h1),stddev=0.1),
+                        dtype=tf.float32,
+                        name="weights_fc1"
+                )
+            self.biases_fc1=tf.Variable(
+                        initial_value=tf.zeros(shape=(self.n_h1,)),
+                        name="biases_fc1"
+                )
+
+            # full connected layer 2(fc2)
+            # weight(n_h1 x n_h2) and biases(n_h2,)
+            self.weights_fc2 = tf.Variable(
+                        initial_value=tf.truncated_normal(shape=(self.n_h1, self.n_h2), stddev=0.1),
+                        dtype=tf.float32,
+                        name="weights_fc2"
+                )
+            self.biases_fc2 = tf.Variable(
+                        initial_value=tf.zeros(shape=(self.n_h2,)),
+                        name="biases_fc2"
+                )
+
+            #output layer
             #weights
-            self.weights=tf.Variable(initial_value=tf.zeros(shape=(num_of_features,num_of_category)),name="weights")
+            self.weights=tf.Variable(
+                        initial_value=tf.zeros(shape=(self.n_h2,num_of_category)),
+                        dtype=tf.float32,
+                        name="weights"
+                )
             #biases
-            self.biases=tf.Variable(initial_value=tf.zeros(shape=(num_of_category,)),name="biases")
+            self.biases=tf.Variable(
+                        initial_value=tf.zeros(shape=(num_of_category,)),
+                        name="biases"
+                )
+
             self.init=tf.global_variables_initializer()
 
     #forward compute
     def forward(self,X):
         with self.graph.as_default():
-            logits=tf.matmul(X,self.weights)+self.biases
+            #hidden layer 1 output
+            activation_fc1=tf.nn.relu(
+                    features=tf.matmul(X,self.weights_fc1)+self.biases_fc1,
+                    name="activation_fc1"
+                )
+            # hidden layer 2 output
+            activation_fc2 = tf.nn.relu(
+                features=tf.matmul(activation_fc1, self.weights_fc2) + self.biases_fc2,
+                name="activation_fc2"
+            )
+
+            #output layer
+            logits=tf.matmul(activation_fc2,self.weights)+self.biases
         return logits
 
     #training
@@ -68,9 +116,11 @@ class Perceptron():
 
             print("------------traing start-------------")
             for train_index,validation_index in indices:
+                print("epoch:", epoch)
+
+                #size of trainSet and validationSet
                 trainDataSize=train_index.shape[0]
                 validationDataSize=validation_index.shape[0]
-                print("epoch:",epoch)
 
                 #average train loss and validation loss
                 train_losses=[]
@@ -80,13 +130,17 @@ class Perceptron():
                 train_accus=[]
                 validation_accus=[]
 
-
                 #mini batch
                 for i in range(0,(trainDataSize//batch_size)):
-                    _,train_loss=self.session.run(fetches=[optimizer,cross_entropy],
-                                          feed_dict={X_p:X[train_index[i*batch_size:(i+1)*batch_size]],y_p:y_dummy[train_index[i*batch_size:(i+1)*batch_size]]})
-                    validation_loss=self.session.run(fetches=cross_entropy,
-                                             feed_dict={X_p:X[validation_index],y_p:y_dummy[validation_index]})
+                    _,train_loss=self.session.run(
+                        fetches=[optimizer,cross_entropy],
+                        feed_dict={X_p:X[train_index[i*batch_size:(i+1)*batch_size]],
+                                   y_p:y_dummy[train_index[i*batch_size:(i+1)*batch_size]]}
+                    )
+                    validation_loss=self.session.run(
+                        fetches=cross_entropy,
+                        feed_dict={X_p:X[validation_index],y_p:y_dummy[validation_index]}
+                    )
 
                      #prediction in training process
                     #train_pred=self.predict(X=X[train_index[i*batch_size:(i+1)*batch_size]])
