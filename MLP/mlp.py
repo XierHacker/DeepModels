@@ -59,7 +59,7 @@ class MLP():
                         name="biases"
                 )
 
-            self.init=tf.global_variables_initializer()
+
 
     #forward compute
     def forward(self,X):
@@ -105,7 +105,10 @@ class MLP():
             logits=self.forward(X_p)
            # pred=self.predict(X_p)
             cross_entropy=tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits,labels=y_p))
-            optimizer=tf.train.GradientDescentOptimizer(0.001).minimize(cross_entropy)
+            optimizer=tf.train.AdagradOptimizer(0.001).minimize(cross_entropy)
+
+            #put at the end of all Variables as possible
+            self.init = tf.global_variables_initializer()
 
 
         #SGD training

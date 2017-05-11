@@ -23,7 +23,7 @@ class Perceptron():
             self.weights=tf.Variable(initial_value=tf.zeros(shape=(num_of_features,num_of_category)),name="weights")
             #biases
             self.biases=tf.Variable(initial_value=tf.zeros(shape=(num_of_category,)),name="biases")
-            self.init=tf.global_variables_initializer()
+
 
     #forward compute
     def forward(self,X):
@@ -58,6 +58,8 @@ class Perceptron():
            # pred=self.predict(X_p)
             cross_entropy=tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits,labels=y_p))
             optimizer=tf.train.GradientDescentOptimizer(0.001).minimize(cross_entropy)
+
+            self.init = tf.global_variables_initializer()
 
 
         #SGD training
