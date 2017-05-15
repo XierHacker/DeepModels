@@ -16,51 +16,56 @@ class Perceptron():
         self.session=tf.Session(graph=self.graph)
 
 
-    #add some variables or constant etc to a graph
+    #the main framework of this model
     def define_framewrok(self,num_of_features,num_of_category):
         with self.graph.as_default():
+
+            #data place holder
+            self.X_p = tf.placeholder(dtype=tf.float32, shape=(None, num_of_features),name="X_p")
+            self.y_dummy_p = tf.placeholder(dtype=tf.float32, shape=(None, num_of_category),name="y_dummy_p")
+            self.y_p=tf.placeholder(dtype=tf.int64,shape=(None,),name="y_p")
+
+            #-------------------------------fully connected layer---------------------------------------------------
             #weights
-            self.weights=tf.Variable(initial_value=tf.zeros(shape=(num_of_features,num_of_category)),name="weights")
+            self.weights=tf.Variable(initial_value=tf.zeros(shape=(num_of_features,num_of_category)),
+                                     name="weights")
             #biases
-            self.biases=tf.Variable(initial_value=tf.zeros(shape=(num_of_category,)),name="biases")
+            self.biases=tf.Variable(initial_value=tf.zeros(shape=(num_of_category,)),
+                                    name="biases")
 
+            logits = tf.matmul(self.X_p, self.weights) + self.biases
 
-    #forward compute
-    def forward(self,X):
-        with self.graph.as_default():
-            logits=tf.matmul(X,self.weights)+self.biases
-        return logits
+            #-------------------------------------------------------------------------------------------------------
+            #probability
+            self.prob=tf.nn.softmax(logits=logits,name="prob")
+            #prediction
+            self.pred=tf.argmax(input=self.prob,axis=1,name="pred")
+            #accuracy
+            self.accuracy=tf.reduce_mean(input_tensor=tf.cast(x=tf.equal(x=self.pred,y=self.y_p),dtype=tf.float32),
+                                         name="accuracy")
+            #loss
+            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.y_dummy_p))
+            #optimizer
+            self.optimizer = tf.train.GradientDescentOptimizer(0.001).minimize(self.cross_entropy)
+
+            self.init = tf.global_variables_initializer()
 
     #training
     def fit(self,X,y,epochs=5,batch_size=100,print_log=False):
         #num of samples,features and category
-        rows=X.shape[0]
-        cols=X.shape[1]
+        n_samples=X.shape[0]
+        n_features=X.shape[1]
 
-        #one hot-encoding
+        #one hot-encoding,num of category
         y_dummy=pd.get_dummies(data=y).values
-
-        #how many category
-        category=y_dummy.shape[1]
+        n_category=y_dummy.shape[1]
 
         #add op into graph
-        self.define_framewrok(cols,category)
+        self.define_framewrok(n_features,n_category)
 
         #shuffle for random sampling
         sp=ShuffleSplit(n_splits=epochs,train_size=0.8)
         indices=sp.split(X=X)
-
-        #placeholder
-        with self.graph.as_default():
-            X_p=tf.placeholder(dtype=tf.float32,shape=(None,cols))
-            y_p=tf.placeholder(dtype=tf.float32,shape=(None,category))
-            logits=self.forward(X_p)
-           # pred=self.predict(X_p)
-            cross_entropy=tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits,labels=y_p))
-            optimizer=tf.train.GradientDescentOptimizer(0.001).minimize(cross_entropy)
-
-            self.init = tf.global_variables_initializer()
-
 
         #SGD training
         epoch=1
@@ -85,57 +90,58 @@ class Perceptron():
 
                 #mini batch
                 for i in range(0,(trainDataSize//batch_size)):
-                    _,train_loss=self.session.run(fetches=[optimizer,cross_entropy],
-                                          feed_dict={X_p:X[train_index[i*batch_size:(i+1)*batch_size]],y_p:y_dummy[train_index[i*batch_size:(i+1)*batch_size]]})
-                    validation_loss=self.session.run(fetches=cross_entropy,
-                                             feed_dict={X_p:X[validation_index],y_p:y_dummy[validation_index]})
+                    _,train_loss,train_accuracy=self.session.run(
+                                    fetches=[self.optimizer,self.cross_entropy,self.accuracy],
 
-                     #prediction in training process
-                    #train_pred=self.predict(X=X[train_index[i*batch_size:(i+1)*batch_size]])
-                    #validation_pred=self.predict(X=X[validation_index])
+                                    feed_dict={self.X_p:X[train_index[i*batch_size:(i+1)*batch_size]],
+                                                self.y_dummy_p:y_dummy[train_index[i*batch_size:(i+1)*batch_size]],
+                                                self.y_p:y[train_index[i*batch_size:(i+1)*batch_size]]
+                                            }
+                                    )
 
-                    #accuracy in training process
-                   # train_accuracy=self.accuracy(y_true=y[train_index[i*batch_size:(i+1)*batch_size]],y_pred=train_pred)
-                   # validation_accuracy=self.accuracy(y_true=y[validation_index],y_pred=validation_pred)
+                    validation_loss,validation_accuracy=self.session.run(
+                                    fetches=[self.cross_entropy,self.accuracy],
+
+                                    feed_dict={self.X_p:X[validation_index],
+                                                self.y_dummy_p:y_dummy[validation_index],
+                                                self.y_p:y[validation_index]
+                                            }
+                                    )
 
                     #add to list to compute average value
                     train_losses.append(train_loss)
                     validation_losses.append(validation_loss)
-                   # train_accus.append(train_accuracy)
-                   # validation_accus.append(validation_accus)
+                    train_accus.append(train_accuracy)
+                    validation_accus.append(validation_accuracy)
 
 
                     #weather print training infomation
                     if(print_log):
+                        print("#############################################################")
+                        print("batch: ",i*batch_size,"~",(i+1)*batch_size,"of epoch:",epoch)
                         print("training loss:",train_loss)
                         print("validation loss:",validation_loss)
                         print("train accuracy:", train_accuracy)
                         print("validation accuracy:", validation_accuracy)
+                        print("#############################################################\n")
 
                # print("train_losses:",train_losses)
                 ave_train_loss=sum(train_losses)/len(train_losses)
                 ave_validation_loss=sum(validation_losses)/len(validation_losses)
-              #  ave_train_accuracy=sum(train_accus)/len(train_accus)
-              #  ave_validation_accuracy=sum(validation_accus)/len(validation_accus)
+                ave_train_accuracy=sum(train_accus)/len(train_accus)
+                ave_validation_accuracy=sum(validation_accus)/len(validation_accus)
                 print("average training loss:",ave_train_loss)
                 print("average validation loss:",ave_validation_loss)
-              #  print("average training accuracy:", ave_train_accuracy)
-              #  print("average validation accuracy:", ave_validation_accuracy)
+                print("average training accuracy:", ave_train_accuracy)
+                print("average validation accuracy:", ave_validation_accuracy)
                 epoch+=1
 
     def predict(self,X):
-        with self.graph.as_default():
-            prob=self.predict_prob(X)
-            pred=tf.argmax(input=prob,axis=1)
-
         with self.session.as_default():
-            result=pred.eval()
-            return result
+            pred = self.session.run(fetches=self.pred, feed_dict={self.X_p: X})
+        return pred
 
     def predict_prob(self,X):
-        prob=tf.nn.softmax(self.forward(X))
+        with self.session.as_default():
+            prob=self.session.run(fetches=self.prob,feed_dict={self.X_p:X})
         return prob
-
-    def accuracy(self,y_true,y_pred):
-        score=accuracy_score(y_true=y_true,y_pred=y_pred)
-        return score
