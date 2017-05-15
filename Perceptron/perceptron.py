@@ -6,7 +6,6 @@ import tensorflow as tf
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import ShuffleSplit
-from sklearn.metrics import accuracy_score
 
 
 class Perceptron():
