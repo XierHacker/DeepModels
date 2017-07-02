@@ -1,5 +1,5 @@
 '''
-    
+
 
 
 '''
@@ -18,6 +18,7 @@ class AlexNet():
         self.graph = tf.Graph()
         self.session = tf.Session(graph=self.graph)
 
+    #use to debug
     def print_info(self,t):
         print(t.op.name," ",t.get_shape().as_list)
 
@@ -61,7 +62,8 @@ class AlexNet():
 
                 # we get (n x height x width x 64) feature map
                 self.featureMap_conv1 = tf.nn.conv2d(
-                    input=self.X_p, filter=self.filter_conv1,
+                    input=self.X_p,
+                    filter=self.filter_conv1,
                     strides=[1, 4, 4, 1],
                     padding="SAME",
                     name="FeatureMap_conv1") + self.biases_conv1
@@ -97,7 +99,8 @@ class AlexNet():
 
                 # we get (n x height x width x 192) feature map
                 self.featureMap_conv2 = tf.nn.conv2d(
-                    input=self.activation_conv1, filter=self.filter_conv2,
+                    input=self.activation_conv1,
+                    filter=self.filter_conv2,
                     strides=[1, 1, 1, 1],
                     padding="SAME",
                     name="FeatureMap_conv2") + self.biases_conv2
@@ -110,7 +113,7 @@ class AlexNet():
                     ksize=[1, 3, 3, 1],
                     strides=[1, 2, 2, 1],
                     padding="VALID",
-                    name="pooing_conv1"
+                    name="pooing_conv2"
                 )
                 # activation as next layer's input (n x height/2 x width/2  x 6)
                 self.activation_conv2 = tf.nn.relu(features=self.pool_featureMap_conv2, name="relu_conv2")
@@ -133,7 +136,8 @@ class AlexNet():
 
                 # we get (n x height x width x 192) feature map
                 self.featureMap_conv3 = tf.nn.conv2d(
-                    input=self.activation_conv2, filter=self.filter_conv3,
+                    input=self.activation_conv2,
+                    filter=self.filter_conv3,
                     strides=[1, 1, 1, 1],
                     padding="SAME",
                     name="FeatureMap_conv3") + self.biases_conv3
@@ -162,7 +166,8 @@ class AlexNet():
 
                 # we get (n x height x width x 256) feature map
                 self.featureMap_conv4 = tf.nn.conv2d(
-                    input=self.activation_conv3, filter=self.filter_conv4,
+                    input=self.activation_conv3,
+                    filter=self.filter_conv4,
                     strides=[1, 1, 1, 1],
                     padding="SAME",
                     name="FeatureMap_conv3") + self.biases_conv4
@@ -180,18 +185,19 @@ class AlexNet():
                 self.filter_conv5 = tf.Variable(
                     initial_value=tf.truncated_normal(shape=(3, 3, 256, 256)),
                     dtype=tf.float32,
-                    name="fiter_conv2"
+                    name="fiter_conv5"
                 )
 
                 self.biases_conv5 = tf.Variable(
                     initial_value=tf.truncated_normal(shape=(256,)),
                     dtype=tf.float32,
-                    name="biases_conv2"
+                    name="biases_conv5"
                 )
 
                 # we get (n x height x width x 256) feature map
                 self.featureMap_conv5 = tf.nn.conv2d(
-                    input=self.activation_conv4, filter=self.filter_conv5,
+                    input=self.activation_conv4,
+                    filter=self.filter_conv5,
                     strides=[1, 1, 1, 1],
                     padding="SAME",
                     name="FeatureMap_conv5") + self.biases_conv5
@@ -295,7 +301,7 @@ class AlexNet():
             )
             # loss
             self.cross_entropy = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.y_dummy_p))
+                tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.y_dummy_p))
             # optimizer
             self.optimizer = tf.train.AdamOptimizer(0.0001).minimize(self.cross_entropy)
 
