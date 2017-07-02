@@ -304,8 +304,7 @@ class AlexNet():
                 tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.y_dummy_p))
             # optimizer
             self.optimizer = tf.train.AdamOptimizer(0.0001).minimize(self.cross_entropy)
-
-            self.init = tf.global_variables_initializer()
+            self.init_op=tf.global_variables_initializer()
 
     # training
     def fit(self, X, y, epochs=20, batch_size=500, print_log=False):
@@ -330,13 +329,16 @@ class AlexNet():
         epoch = 1
         with self.session.as_default():
             # initialize all variables
-            self.session.run(self.init)
+            self.session.run(self.init_op)
+
+
 
             print("------------traing start-------------")
             for train_index, validation_index in indices:
                 trainDataSize = train_index.shape[0]
                 validationDataSize = validation_index.shape[0]
                 print("epoch:", epoch)
+
 
                 # average train loss and validation loss
                 train_losses = []
@@ -346,15 +348,32 @@ class AlexNet():
                 train_accus = []
                 validation_accus = []
 
+                #average time uses
+                back_time=[]
+                forward_time=[]
+
                 # mini batch
                 for i in range(0, (trainDataSize // batch_size)):
-                    _, train_loss, train_accuracy = self.session.run(
-                        fetches=[self.optimizer, self.cross_entropy, self.accuracy],
+                    start_time_back = time.time()
+                    _=self.session.run(
+                        fetches=self.optimizer,
                         feed_dict={self.X_p: X[train_index[i * batch_size:(i + 1) * batch_size]],
                                    self.y_dummy_p: y_dummy[train_index[i * batch_size:(i + 1) * batch_size]],
                                    self.y_p: y[train_index[i * batch_size:(i + 1) * batch_size]]
                                    }
                     )
+                    duration_back=time.time()-start_time_back
+
+
+                    start_time_forward=time.time()
+                    train_loss, train_accuracy = self.session.run(
+                        fetches=[self.cross_entropy, self.accuracy],
+                        feed_dict={self.X_p: X[train_index[i * batch_size:(i + 1) * batch_size]],
+                                   self.y_dummy_p: y_dummy[train_index[i * batch_size:(i + 1) * batch_size]],
+                                   self.y_p: y[train_index[i * batch_size:(i + 1) * batch_size]]
+                                   }
+                    )
+                    duration_forward = time.time() - start_time_forward
 
                     validation_loss, validation_accuracy = self.session.run(
                         fetches=[self.cross_entropy, self.accuracy],
@@ -369,6 +388,9 @@ class AlexNet():
                     validation_losses.append(validation_loss)
                     train_accus.append(train_accuracy)
                     validation_accus.append(validation_accuracy)
+                    back_time.append(duration_back)
+                    forward_time.append(duration_forward)
+
 
                     # weather print training infomation
                     if (print_log):
@@ -381,14 +403,14 @@ class AlexNet():
                         print("#############################################################\n")
 
                         # print("train_losses:",train_losses)
-                ave_train_loss = sum(train_losses) / len(train_losses)
-                ave_validation_loss = sum(validation_losses) / len(validation_losses)
-                ave_train_accuracy = sum(train_accus) / len(train_accus)
-                ave_validation_accuracy = sum(validation_accus) / len(validation_accus)
-                print("average training loss:", ave_train_loss)
-                print("average validation loss:", ave_validation_loss)
-                print("average training accuracy:", ave_train_accuracy)
-                print("average validation accuracy:", ave_validation_accuracy)
+
+                print("average training loss:", sum(train_losses) / len(train_losses))
+                print("average validation loss:", sum(validation_losses) / len(validation_losses))
+                print("average training accuracy:", sum(train_accus) / len(train_accus))
+                print("average validation accuracy:", sum(validation_accus) / len(validation_accus))
+                print("total back time uses per minibach/epoch:",sum(back_time)/len(back_time),"/",sum(back_time))
+                print("total forward time uses per minibach/epoch:", sum(forward_time)/len(forward_time), "/", sum(forward_time))
+
                 epoch += 1
 
     def predict(self, X):
