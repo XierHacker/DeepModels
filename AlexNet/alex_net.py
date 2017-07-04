@@ -67,6 +67,7 @@ class AlexNet():
                     strides=[1, 4, 4, 1],
                     padding="SAME",
                     name="FeatureMap_conv1") + self.biases_conv1
+                self.print_info(self.featureMap_conv1)
 
                 #we drop the LRN layer,because it's seems not help in our tesk
 
@@ -78,6 +79,7 @@ class AlexNet():
                     padding="VALID",
                     name="pooing_conv1"
                 )
+                self.print_info(self.pool_featureMap_conv1)
                 # activation as next layer's input (n x height/2 x width/2  x 6)
                 self.activation_conv1 = tf.nn.relu(features=self.pool_featureMap_conv1, name="relu_conv1")
 
@@ -105,6 +107,7 @@ class AlexNet():
                     padding="SAME",
                     name="FeatureMap_conv2") + self.biases_conv2
 
+                self.print_info(self.featureMap_conv2)
                 # we drop the LRN layer,because it's seems not help in our tesk
 
                 # pooing --> (n x height/2 x width/2  x 6)
@@ -115,6 +118,7 @@ class AlexNet():
                     padding="VALID",
                     name="pooing_conv2"
                 )
+                self.print_info(self.pool_featureMap_conv2)
                 # activation as next layer's input (n x height/2 x width/2  x 6)
                 self.activation_conv2 = tf.nn.relu(features=self.pool_featureMap_conv2, name="relu_conv2")
 
@@ -142,7 +146,7 @@ class AlexNet():
                     padding="SAME",
                     name="FeatureMap_conv3") + self.biases_conv3
 
-
+                self.print_info(self.featureMap_conv3)
                 # there has no pooing
 
                 # activation as next layer's input (n x height/2 x width/2  x 6)
@@ -172,6 +176,7 @@ class AlexNet():
                     padding="SAME",
                     name="FeatureMap_conv3") + self.biases_conv4
 
+                self.print_info(self.featureMap_conv4)
                 # there has no pooing
 
                 # activation as next layer's input (n x height/2 x width/2  x 6)
@@ -202,6 +207,7 @@ class AlexNet():
                     padding="SAME",
                     name="FeatureMap_conv5") + self.biases_conv5
 
+                self.print_info(self.featureMap_conv5)
                 # we drop the LRN layer,because it's seems not help in our tesk
 
                 # pooing --> (n x height/2 x width/2  x 6)
@@ -212,6 +218,7 @@ class AlexNet():
                     padding="VALID",
                     name="pooing_conv5"
                 )
+                self.print_info(self.pool_featureMap_conv5)
                 # activation as next layer's input (n x height/2 x width/2  x 6)
                 self.activation_conv5 = tf.nn.relu(features=self.pool_featureMap_conv5, name="relu_conv5")
 

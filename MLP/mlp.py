@@ -99,10 +99,14 @@ class MLP():
             #optimizer
             self.optimizer = tf.train.GradientDescentOptimizer(0.001).minimize(self.cross_entropy)
 
+            # visualization
+            witer = tf.summary.FileWriter(logdir="./log/", graph=self.graph)
+
             self.init = tf.global_variables_initializer()
 
+
     #training
-    def fit(self,X,y,epochs=5,batch_size=100,print_log=False):
+    def fit(self,X,y,epochs=1,batch_size=100,print_log=False):
         #num of samples,features and category
         n_samples=X.shape[0]
         n_features=X.shape[1]
@@ -186,6 +190,13 @@ class MLP():
                 print("average training accuracy:", ave_train_accuracy)
                 print("average validation accuracy:", ave_validation_accuracy)
                 epoch+=1
+
+
+
+
+
+
+
 
     def predict(self,X):
         with self.session.as_default():
