@@ -19,70 +19,76 @@ class MLP():
     #the main framework of this model
     def define_framewrok(self,num_of_features,num_of_category):
         with self.graph.as_default():
-
             #data place holder
-            self.X_p = tf.placeholder(dtype=tf.float32, shape=(None, num_of_features),name="X_p")
-            self.y_dummy_p = tf.placeholder(dtype=tf.float32, shape=(None, num_of_category),name="y_dummy_p")
-            self.y_p=tf.placeholder(dtype=tf.int64,shape=(None,),name="y_p")
+            with tf.name_scope("Input"):
+                self.X_p = tf.placeholder(dtype=tf.float32, shape=(None, num_of_features),name="X_p")
+                self.y_dummy_p = tf.placeholder(dtype=tf.float32, shape=(None, num_of_category),name="y_dummy_p")
+                self.y_p=tf.placeholder(dtype=tf.int64,shape=(None,),name="y_p")
 
 
             # -----------------------full connected layer 1(fc1)------------------------------#
-            # weight(num_of_features x n_h1) and biases(n_h1,)
-            self.weights_fc1 = tf.Variable(
-                    initial_value=tf.truncated_normal(shape=(num_of_features, self.n_h1), stddev=0.1),
-                    dtype=tf.float32,
-                    name="weights_fc1"
-                )
-            self.biases_fc1 = tf.Variable(
-                    initial_value=tf.zeros(shape=(self.n_h1,)),
-                    name="biases_fc1"
-                )
-            # hidden layer 1 output(nxn_h1)
-            self.activation_fc1 = tf.nn.relu(
-                    features=tf.matmul(self.X_p, self.weights_fc1) + self.biases_fc1,
-                    name="activation_fc1"
-                )
+            with tf.name_scope("FC1"):
+                # weight(num_of_features x n_h1) and biases(n_h1,)
+                self.weights_fc1 = tf.Variable(
+                        initial_value=tf.truncated_normal(shape=(num_of_features, self.n_h1), stddev=0.1),
+                        dtype=tf.float32,
+                        name="weights_fc1"
+                    )
+
+                self.biases_fc1 = tf.Variable(
+                        initial_value=tf.zeros(shape=(self.n_h1,)),
+                        name="biases_fc1"
+                    )
+                # hidden layer 1 output(nxn_h1)
+                self.activation_fc1 = tf.nn.relu(
+                        features=tf.matmul(self.X_p, self.weights_fc1) + self.biases_fc1,
+                        name="activation_fc1"
+                    )
             #-----------------------------------------------------------------------------------
 
 
 
 
             # -----------------------full connected layer 2(fc2)------------------------------#
-            # weight(n_h1 x n_h2) and biases(n_h2,)
-            self.weights_fc2 = tf.Variable(
-                    initial_value=tf.truncated_normal(shape=(self.n_h1, self.n_h2), stddev=0.1),
-                    dtype=tf.float32,
-                    name="weights_fc2"
-            )
-            self.biases_fc2 = tf.Variable(
-                    initial_value=tf.zeros(shape=(self.n_h2,)),
-                    name="biases_fc2"
-            )
-            # hidden layer 2 output(nxn_h2)
-            self.activation_fc2 = tf.nn.relu(
-                    features=tf.matmul(self.activation_fc1, self.weights_fc2) + self.biases_fc2,
-                    name="activation_fc2"
-                )
+            with tf.name_scope("FC2"):
+                # weight(n_h1 x n_h2) and biases(n_h2,)
+                self.weights_fc2 = tf.Variable(
+                        initial_value=tf.truncated_normal(shape=(self.n_h1, self.n_h2), stddev=0.1),
+                        dtype=tf.float32,
+                        name="weights_fc2"
+                    )
+
+                self.biases_fc2 = tf.Variable(
+                        initial_value=tf.zeros(shape=(self.n_h2,)),
+                        name="biases_fc2"
+                    )
+
+                # hidden layer 2 output(nxn_h2)
+                self.activation_fc2 = tf.nn.relu(
+                        features=tf.matmul(self.activation_fc1, self.weights_fc2) + self.biases_fc2,
+                        name="activation_fc2"
+                    )
             # -----------------------------------------------------------------------------------
 
 
 
 
             #-------------------------------output layer---------------------------------------------------
-            # output layer
-            # weights
-            self.weights = tf.Variable(
-                    initial_value=tf.zeros(shape=(self.n_h2, num_of_category)),
-                    dtype=tf.float32,
-                    name="weights"
-                )
-            # biases
-            self.biases = tf.Variable(
-                    initial_value=tf.zeros(shape=(num_of_category,)),
-                    name="biases"
-                )
+            with tf.name_scope("FC3"):
+                # weights
+                self.weights = tf.Variable(
+                        initial_value=tf.zeros(shape=(self.n_h2, num_of_category)),
+                        dtype=tf.float32,
+                        name="weights"
+                    )
 
-            logits = tf.matmul(self.activation_fc2, self.weights) + self.biases
+                # biases
+                self.biases = tf.Variable(
+                        initial_value=tf.zeros(shape=(num_of_category,)),
+                        name="biases"
+                    )
+
+                logits = tf.matmul(self.activation_fc2, self.weights) + self.biases
             #-------------------------------------------------------------------------------------------------------
 
 
@@ -96,11 +102,15 @@ class MLP():
                                          name="accuracy")
             #loss
             self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.y_dummy_p))
+
+            tf.summary.scalar(name="loss",tensor=self.cross_entropy)
+
             #optimizer
             self.optimizer = tf.train.GradientDescentOptimizer(0.001).minimize(self.cross_entropy)
 
+            self.merged=tf.summary.merge_all()
             # visualization
-            witer = tf.summary.FileWriter(logdir="./log/", graph=self.graph)
+            self.writer = tf.summary.FileWriter(logdir="./log", graph=self.graph)
 
             self.init = tf.global_variables_initializer()
 
@@ -145,14 +155,16 @@ class MLP():
 
                 #mini batch
                 for i in range(0,(trainDataSize//batch_size)):
-                    _,train_loss,train_accuracy=self.session.run(
-                                    fetches=[self.optimizer,self.cross_entropy,self.accuracy],
+                    _,train_loss,train_accuracy,all_summary=self.session.run(
+                                    fetches=[self.optimizer,self.cross_entropy,self.accuracy,self.merged],
 
                                     feed_dict={self.X_p:X[train_index[i*batch_size:(i+1)*batch_size]],
                                                 self.y_dummy_p:y_dummy[train_index[i*batch_size:(i+1)*batch_size]],
                                                 self.y_p:y[train_index[i*batch_size:(i+1)*batch_size]]
                                             }
                                     )
+                    #add summary to event file
+                    self.writer.add_summary(summary=all_summary,global_step=i)
 
                     validation_loss,validation_accuracy=self.session.run(
                                     fetches=[self.cross_entropy,self.accuracy],
@@ -189,13 +201,8 @@ class MLP():
                 print("average validation loss:",ave_validation_loss)
                 print("average training accuracy:", ave_train_accuracy)
                 print("average validation accuracy:", ave_validation_accuracy)
+
                 epoch+=1
-
-
-
-
-
-
 
 
     def predict(self,X):

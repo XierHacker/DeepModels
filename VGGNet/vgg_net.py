@@ -68,7 +68,7 @@ def fc(input,out_channel,activate,name):
 
 
 
-class AlexNet():
+class VGG16():
     def __init__(self):
         # basic environment
         self.graph = tf.Graph()
