@@ -7,21 +7,21 @@ from perceptron import Perceptron
 
 
 '''
-train_frame=pd.read_csv("../TestData/MNIST/train.csv")
-test_frame=pd.read_csv("../TestData/MNIST/test.csv")
+train_frame = pd.read_csv("../TestData/MNIST/train.csv")
+test_frame = pd.read_csv("../TestData/MNIST/test.csv")
 
-#pop the labels and one-hot coding
-train_labels_frame=train_frame.pop("label")
-#trans format
-train_frame=train_frame.astype(np.float32)
-test_frame=test_frame.astype(np.float32)
+# pop the labels and one-hot coding
+train_labels_frame = train_frame.pop("label")
+# trans format
+train_frame = train_frame.astype(np.float32)
+test_frame = test_frame.astype(np.float32)
 
-#load model
-percept=Perceptron()
-#percept.fit(X=train_frame.values,y=train_labels_frame.values,print_log=False)
+# load model
+percept = Perceptron()
+# percept.fit(X=train_frame.values,y=train_labels_frame.values,print_log=False)
 
-#predict
-result=percept.predict(X=test_frame.values)
+# predict
+result = percept.predict(X=test_frame.values)
 print(result)
 
 '''
@@ -41,9 +41,8 @@ with g.as_default():
 with tf.Session(graph=g) as sess:
     ar,ac,ac2,ac3=sess.run(fetches=[argm,acc,acc2,acc3])
     print(ar,ac,ac2,ac3)
-    
+
 a=np.array([1,2,3,4,4,1])
 a_dummy=pd.get_dummies(a)
 print(a_dummy)
 '''
-

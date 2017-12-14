@@ -12,27 +12,40 @@ FLAGS=tf.app.flags.FLAGS
 
 
 class Perceptron():
-    def __init__(self,learning_rate=0.001):
+    def __init__(self):
         #basic environment
         self.graph=tf.Graph()
         self.session=tf.Session(graph=self.graph)
-        self.learning_rate=learning_rate
 
-        # sava model
-        self.saver = tf.train.Saver()
+    #contains forward and training
+    def fit(self,X,y,epochs=5,batch_size=100,learning_rate=0.001,print_log=False):
+        #num of samples,features and category
+        n_samples=X.shape[0]
+        n_features=X.shape[1]
 
+        #one hot-encoding,num of category
+        y_dummy=pd.get_dummies(data=y).values
+        n_category=y_dummy.shape[1]
 
-    #main framework of this model,can be the forward process
-    def define_framewrok(self,num_of_features,num_of_category):
+        # shuffle for random sampling
+        sp = ShuffleSplit(n_splits=epochs, train_size=0.8)
+        indices = sp.split(X=X)
+
+        # best accuracy on validation test
+        best_validation_accus = 0
+
+        #epoch record
+        epoch = 1
+
+        ##########################define graph(forward computation)#####################
         with self.graph.as_default():
-
             #data place holder
             self.X_p = tf.placeholder(dtype=tf.float32,
-                                      shape=(None, num_of_features),
+                                      shape=(None, n_features),
                                       name="input_placeholder")
 
             self.y_dummy_p = tf.placeholder(dtype=tf.float32,
-                                            shape=(None, num_of_category),
+                                            shape=(None, n_category),
                                             name="label_dummy_placeholder")
 
             self.y_p=tf.placeholder(dtype=tf.int64,
@@ -41,11 +54,11 @@ class Perceptron():
 
             #--------------------------fully connected layer-----------------------------------#
             #weights(initialized to 0)
-            self.weights=tf.Variable(initial_value=tf.zeros(shape=(num_of_features,num_of_category)),
+            self.weights=tf.Variable(initial_value=tf.zeros(shape=(n_features,n_category)),
                                      name="weights")
 
             #biases(initialized to 0)
-            self.biases=tf.Variable(initial_value=tf.zeros(shape=(num_of_category,)),
+            self.biases=tf.Variable(initial_value=tf.zeros(shape=(n_category,)),
                                     name="biases")
 
             #shape of logits is (None,num_of_category)
@@ -71,52 +84,30 @@ class Perceptron():
                 )
 
             #optimizer
-            self.optimizer = tf.train.GradientDescentOptimizer(self.learning_rate).minimize(self.cross_entropy)
+            self.optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(self.cross_entropy)
 
             self.init = tf.global_variables_initializer()
 
-
-
-
-    #training
-    def fit(self,X,y,epochs=5,batch_size=100,print_log=False):
-        #num of samples,features and category
-        n_samples=X.shape[0]
-        n_features=X.shape[1]
-
-        #one hot-encoding,num of category
-        y_dummy=pd.get_dummies(data=y).values
-        n_category=y_dummy.shape[1]
-
-        #add op into graph
-        self.define_framewrok(n_features,n_category)
-
-        #shuffle for random sampling
-        sp=ShuffleSplit(n_splits=epochs,train_size=0.8)
-        indices=sp.split(X=X)
-
-        #best accuracy on validation test
-        best_validation_accus = 0
-
         #SGD training
-        epoch=1
-        with self.session.as_default():
-            #initialize all variables
-            self.session.run(self.init)
+        with self.session as sess:
+            sess.run(self.init)
+
+            #restore
+            #new_saver = tf.train.import_meta_graph('./model/my-model-10000.meta')
+            #new_saver.restore(sess, './model/my-model-10000')
 
             print("------------traing start-------------")
+
             for train_index,validation_index in indices:
+                print("epoch:", epoch)
+
                 trainDataSize=train_index.shape[0]
                 validationDataSize=validation_index.shape[0]
-                print("epoch:",epoch)
 
                 #average train loss and validation loss
-                train_losses=[]
-                validation_losses=[]
-
+                train_losses=[]; validation_losses=[]
                 #average taing accuracy and validation accuracy
-                train_accus=[]
-                validation_accus=[]
+                train_accus=[]; validation_accus=[]
 
                 #mini batch
                 for i in range(0,(trainDataSize//batch_size)):
@@ -169,19 +160,24 @@ class Perceptron():
                 #when we get a new best validation accuracy,we store the model
                 if best_validation_accus<ave_validation_accuracy:
                     print("we got a new best accuracy on validation set!")
-                    #save model
-                    self.saver.save(sess=self.session,save_path="./model.ckpt")
+                    # Creates a saver.
+                    saver = tf.train.Saver()
+                    saver.save(sess, './model/my-model-10000')
 
-                    #self.saver.save()
-
-
+                    # Generates MetaGraphDef.
+                    saver.export_meta_graph('./model/my-model-10000.meta')
 
 
     def predict(self,X):
-        with self.session.as_default():
+        with self.session as sess:
             #restore model
-            self.saver.restore(sess=self.session,save_path="./model.ckpt")
-            pred = self.session.run(fetches=self.pred, feed_dict={self.X_p: X})
+            new_saver = tf.train.import_meta_graph('./model/my-model-10000.meta',clear_devices=True)
+            new_saver.restore(sess, './model/my-model-10000')
+
+            graph=tf.get_default_graph()
+            pred=graph.get_operation_by_name("pred").outputs[0]
+            X_p=graph.get_operation_by_name("input_placeholder").outputs[0]
+            pred = sess.run(fetches=pred, feed_dict={X_p: X})
         return pred
 
     def predict_prob(self,X):
