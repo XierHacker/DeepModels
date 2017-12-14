@@ -1,5 +1,5 @@
 '''
-    only one output layer
+    only one output layer,no hidden layer
     the shape of weights and bias only define by the input features and output category
 '''
 
@@ -12,13 +12,17 @@ FLAGS=tf.app.flags.FLAGS
 
 
 class Perceptron():
-    def __init__(self):
+    def __init__(self,learning_rate=0.001):
         #basic environment
         self.graph=tf.Graph()
         self.session=tf.Session(graph=self.graph)
+        self.learning_rate=learning_rate
+
+        # sava model
+        self.saver = tf.train.Saver()
 
 
-    #the main framework of this model
+    #main framework of this model,can be the forward process
     def define_framewrok(self,num_of_features,num_of_category):
         with self.graph.as_default():
 
@@ -35,30 +39,44 @@ class Perceptron():
                                     shape=(None,),
                                     name="label_placeholder")
 
-            #-------------------------------fully connected layer---------------------------------------------------
-            #weights
+            #--------------------------fully connected layer-----------------------------------#
+            #weights(initialized to 0)
             self.weights=tf.Variable(initial_value=tf.zeros(shape=(num_of_features,num_of_category)),
                                      name="weights")
-            #biases
+
+            #biases(initialized to 0)
             self.biases=tf.Variable(initial_value=tf.zeros(shape=(num_of_category,)),
                                     name="biases")
 
+            #shape of logits is (None,num_of_category)
             logits = tf.matmul(self.X_p, self.weights) + self.biases
 
-            #-------------------------------------------------------------------------------------------------------
+            #----------------------------------------------------------------------------------#
+
             #probability
             self.prob=tf.nn.softmax(logits=logits,name="prob")
+
             #prediction
             self.pred=tf.argmax(input=self.prob,axis=1,name="pred")
+
             #accuracy
-            self.accuracy=tf.reduce_mean(input_tensor=tf.cast(x=tf.equal(x=self.pred,y=self.y_p),dtype=tf.float32),
-                                         name="accuracy")
+            self.accuracy=tf.reduce_mean(
+                            input_tensor=tf.cast(x=tf.equal(x=self.pred,y=self.y_p),dtype=tf.float32),
+                            name="accuracy"
+                )
+
             #loss
-            self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.y_dummy_p))
+            self.cross_entropy = tf.reduce_mean(
+                        tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.y_dummy_p)
+                )
+
             #optimizer
-            self.optimizer = tf.train.GradientDescentOptimizer(0.001).minimize(self.cross_entropy)
+            self.optimizer = tf.train.GradientDescentOptimizer(self.learning_rate).minimize(self.cross_entropy)
 
             self.init = tf.global_variables_initializer()
+
+
+
 
     #training
     def fit(self,X,y,epochs=5,batch_size=100,print_log=False):
@@ -76,6 +94,9 @@ class Perceptron():
         #shuffle for random sampling
         sp=ShuffleSplit(n_splits=epochs,train_size=0.8)
         indices=sp.split(X=X)
+
+        #best accuracy on validation test
+        best_validation_accus = 0
 
         #SGD training
         epoch=1
@@ -96,7 +117,6 @@ class Perceptron():
                 #average taing accuracy and validation accuracy
                 train_accus=[]
                 validation_accus=[]
-
 
                 #mini batch
                 for i in range(0,(trainDataSize//batch_size)):
@@ -146,8 +166,21 @@ class Perceptron():
                 print("average validation accuracy:", ave_validation_accuracy)
                 epoch+=1
 
+                #when we get a new best validation accuracy,we store the model
+                if best_validation_accus<ave_validation_accuracy:
+                    print("we got a new best accuracy on validation set!")
+                    #save model
+                    self.saver.save(sess=self.session,save_path="./model.ckpt")
+
+                    #self.saver.save()
+
+
+
+
     def predict(self,X):
         with self.session.as_default():
+            #restore model
+            self.saver.restore(sess=self.session,save_path="./model.ckpt")
             pred = self.session.run(fetches=self.pred, feed_dict={self.X_p: X})
         return pred
 

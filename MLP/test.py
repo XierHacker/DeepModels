@@ -6,6 +6,10 @@ from mlp import MLP
 '''
 
 '''
+
+
+
+
 train_frame=pd.read_csv("../TestData/MNIST/train.csv")
 test_frame=pd.read_csv("../TestData/MNIST/test.csv")
 

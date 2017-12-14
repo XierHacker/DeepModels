@@ -15,9 +15,10 @@ train_labels_frame=train_frame.pop("label")
 #trans format
 train_frame=train_frame.astype(np.float32)
 test_frame=test_frame.astype(np.float32)
+
 #load model
 percept=Perceptron()
-percept.fit(X=train_frame.values,y=train_labels_frame.values,print_log=False)
+#percept.fit(X=train_frame.values,y=train_labels_frame.values,print_log=False)
 
 #predict
 result=percept.predict(X=test_frame.values)
