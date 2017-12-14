@@ -1,11 +1,14 @@
 '''
-    only have one output layer
+    only one output layer
     the shape of weights and bias only define by the input features and output category
 '''
+
 import tensorflow as tf
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import ShuffleSplit
+
+FLAGS=tf.app.flags.FLAGS
 
 
 class Perceptron():
@@ -20,9 +23,17 @@ class Perceptron():
         with self.graph.as_default():
 
             #data place holder
-            self.X_p = tf.placeholder(dtype=tf.float32, shape=(None, num_of_features),name="X_p")
-            self.y_dummy_p = tf.placeholder(dtype=tf.float32, shape=(None, num_of_category),name="y_dummy_p")
-            self.y_p=tf.placeholder(dtype=tf.int64,shape=(None,),name="y_p")
+            self.X_p = tf.placeholder(dtype=tf.float32,
+                                      shape=(None, num_of_features),
+                                      name="input_placeholder")
+
+            self.y_dummy_p = tf.placeholder(dtype=tf.float32,
+                                            shape=(None, num_of_category),
+                                            name="label_dummy_placeholder")
+
+            self.y_p=tf.placeholder(dtype=tf.int64,
+                                    shape=(None,),
+                                    name="label_placeholder")
 
             #-------------------------------fully connected layer---------------------------------------------------
             #weights
