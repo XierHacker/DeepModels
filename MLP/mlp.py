@@ -1,10 +1,12 @@
 '''
 two hidden layer and one output layer
 '''
+
 import tensorflow as tf
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import ShuffleSplit
+
 class MLP():
     def __init__(self,num_hidden1_unit,num_hidden2_unit):
         #basic environment
@@ -15,14 +17,26 @@ class MLP():
         self.n_h1=num_hidden1_unit
         self.n_h2=num_hidden2_unit
 
+    #training
+    def fit(self,X,y,epochs=1,batch_size=100,learning_rate=0.001,print_log=False):
+        #num of samples,features and category
+        n_samples=X.shape[0]
+        n_features=X.shape[1]
 
-    #the main framework of this model
-    def define_framewrok(self,num_of_features,num_of_category):
+        #one hot-encoding,num of category
+        y_dummy=pd.get_dummies(data=y).values
+        n_category=y_dummy.shape[1]
+
+        # shuffle for random sampling
+        sp = ShuffleSplit(n_splits=epochs, train_size=0.8)
+        indices = sp.split(X=X)
+
+        #############################define graph,and can be a forward process###########################
         with self.graph.as_default():
             #data place holder
             with tf.name_scope("Input"):
-                self.X_p = tf.placeholder(dtype=tf.float32, shape=(None, num_of_features),name="X_p")
-                self.y_dummy_p = tf.placeholder(dtype=tf.float32, shape=(None, num_of_category),name="y_dummy_p")
+                self.X_p = tf.placeholder(dtype=tf.float32, shape=(None, n_features),name="X_p")
+                self.y_dummy_p = tf.placeholder(dtype=tf.float32, shape=(None, n_category),name="y_dummy_p")
                 self.y_p=tf.placeholder(dtype=tf.int64,shape=(None,),name="y_p")
 
 
@@ -30,7 +44,7 @@ class MLP():
             with tf.name_scope("FC1"):
                 # weight(num_of_features x n_h1) and biases(n_h1,)
                 self.weights_fc1 = tf.Variable(
-                        initial_value=tf.truncated_normal(shape=(num_of_features, self.n_h1), stddev=0.1),
+                        initial_value=tf.truncated_normal(shape=(n_features, self.n_h1), stddev=0.1),
                         dtype=tf.float32,
                         name="weights_fc1"
                     )
@@ -45,8 +59,6 @@ class MLP():
                         name="activation_fc1"
                     )
             #-----------------------------------------------------------------------------------
-
-
 
 
             # -----------------------full connected layer 2(fc2)------------------------------#
@@ -71,8 +83,6 @@ class MLP():
             # -----------------------------------------------------------------------------------
 
 
-
-
             #-------------------------------output layer---------------------------------------------------
             with tf.name_scope("FC3"):
                 # weights
@@ -91,22 +101,22 @@ class MLP():
                 logits = tf.matmul(self.activation_fc2, self.weights) + self.biases
             #-------------------------------------------------------------------------------------------------------
 
-
-
             #probability
             self.prob=tf.nn.softmax(logits=logits,name="prob")
             #prediction
             self.pred=tf.argmax(input=self.prob,axis=1,name="pred")
             #accuracy
-            self.accuracy=tf.reduce_mean(input_tensor=tf.cast(x=tf.equal(x=self.pred,y=self.y_p),dtype=tf.float32),
-                                         name="accuracy")
+            self.accuracy=tf.reduce_mean(
+                    input_tensor=tf.cast(x=tf.equal(x=self.pred,y=self.y_p),dtype=tf.float32),
+                    name="accuracy"
+                )
             #loss
             self.cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.y_dummy_p))
 
             tf.summary.scalar(name="loss",tensor=self.cross_entropy)
 
             #optimizer
-            self.optimizer = tf.train.GradientDescentOptimizer(0.001).minimize(self.cross_entropy)
+            self.optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(self.cross_entropy)
 
             self.merged=tf.summary.merge_all()
             # visualization
@@ -115,22 +125,6 @@ class MLP():
             self.init = tf.global_variables_initializer()
 
 
-    #training
-    def fit(self,X,y,epochs=1,batch_size=100,print_log=False):
-        #num of samples,features and category
-        n_samples=X.shape[0]
-        n_features=X.shape[1]
-
-        #one hot-encoding,num of category
-        y_dummy=pd.get_dummies(data=y).values
-        n_category=y_dummy.shape[1]
-
-        #add op into graph
-        self.define_framewrok(n_features,n_category)
-
-        #shuffle for random sampling
-        sp=ShuffleSplit(n_splits=epochs,train_size=0.8)
-        indices=sp.split(X=X)
 
         #SGD training
         epoch=1

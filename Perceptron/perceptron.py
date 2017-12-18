@@ -160,10 +160,10 @@ class Perceptron():
                 #when we get a new best validation accuracy,we store the model
                 if best_validation_accus<ave_validation_accuracy:
                     print("we got a new best accuracy on validation set!")
-                    # Creates a saver.
+
+                    # Creates a saver. and we only keep the best model
                     saver = tf.train.Saver()
                     saver.save(sess, './model/my-model-10000')
-
                     # Generates MetaGraphDef.
                     saver.export_meta_graph('./model/my-model-10000.meta')
 
@@ -175,6 +175,8 @@ class Perceptron():
             new_saver.restore(sess, './model/my-model-10000')
 
             graph=tf.get_default_graph()
+
+            #get opration from the graph
             pred=graph.get_operation_by_name("pred").outputs[0]
             X_p=graph.get_operation_by_name("input_placeholder").outputs[0]
             pred = sess.run(fetches=pred, feed_dict={X_p: X})
