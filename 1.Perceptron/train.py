@@ -1,35 +1,72 @@
-'''
-    only one output layer,no hidden layer
-    the shape of weights and bias only define by the input features and output category
-'''
-
-import tensorflow as tf
+import os
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import ShuffleSplit
+import tensorflow as tf
+from sklearn.metrics import accuracy_score
+import perceptron
+from utility import preprocessing
 
-FLAGS=tf.app.flags.FLAGS
+
+MAX_EPOCH=10
+LEARNING_RATE=0.01
+
+X_train,y_train,X_valid,y_valid,X_test=preprocessing.load_mnist(path="../../data/mnist/")
+#print(X_train.shape)
+#print(y_train.shape)
+#print(X_valid.shape)
+#print(y_valid.shape)
+#print(X_test.shape)
+
+def train():
+    #data placeholder
+    X_p=tf.placeholder(dtype=tf.float32,shape=(None,perceptron.INPUT_DIM),name="X_p")
+    y_p=tf.placeholder(dtype=tf.float32,shape=(None,perceptron.OUTPUT_DIM),name="y_p")
+
+    #use regularizer
+    regularizer=tf.contrib.layers.l2_regularizer(0.0001)
+
+    #model
+    model=perceptron.Perceptron()
+    logits=model.forward(X_p,regularizer)
+    print(logits)
 
 
-class Perceptron():
-    def __init__(self):
-        #basic environment
-        self.graph=tf.Graph()
-        self.session=tf.Session(graph=self.graph)
+if __name__=="__main__":
+    train()
 
-    #contains forward and training
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+
+    model = Perceptron()
+weights = model.get_weights_variable(
+    shape=(2, 2),
+    regularizer=tf.contrib.layers.l2_regularizer(scale=0.0001)
+)
+print(weights)
+re = tf.get_collection(key="regularized")
+print(re)
+
+
+
+
+ #contains forward and training
     def fit(self,X,y,epochs=5,batch_size=100,learning_rate=0.001,print_log=False):
-        #num of samples,features and category
-        n_samples=X.shape[0]
-        n_features=X.shape[1]
 
-        #one hot-encoding,num of category
-        y_dummy=pd.get_dummies(data=y).values
-        n_category=y_dummy.shape[1]
-
-        # shuffle for random sampling
-        sp = ShuffleSplit(n_splits=epochs, train_size=0.8)
-        indices = sp.split(X=X)
 
         # best accuracy on validation test
         best_validation_accus = 0
@@ -186,3 +223,5 @@ class Perceptron():
         with self.session.as_default():
             prob=self.session.run(fetches=self.prob,feed_dict={self.X_p:X})
         return prob
+
+'''

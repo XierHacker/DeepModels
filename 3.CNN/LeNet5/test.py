@@ -4,8 +4,8 @@ import pandas as pd
 from lenet5 import LeNet5
 
 
-train_frame=pd.read_csv("../TestData/MNIST/train.csv")
-test_frame=pd.read_csv("../TestData/MNIST/test.csv")
+train_frame=pd.read_csv("../../data/MNIST/train.csv")
+test_frame=pd.read_csv("../../data/MNIST/test.csv")
 
 #pop the labels and one-hot coding
 train_labels_frame=train_frame.pop("label")

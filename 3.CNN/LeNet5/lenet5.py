@@ -4,9 +4,9 @@
         filter:5x5,stride=1,number=6
         pool(average pooing):2x2,stride=2
         activation:sigmoid(we use relu)
-        
 
 '''
+
 import tensorflow as tf
 import numpy as np
 import pandas as pd
