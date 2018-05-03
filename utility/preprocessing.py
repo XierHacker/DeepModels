@@ -14,8 +14,10 @@ def load_mnist(path):
     valid_frame = pd.read_csv(path + "train.csv")[40000:]
     test_frame = pd.read_csv(path+"test.csv")
 
-    y_train=train_frame.pop(item="label").values
-    y_valid=valid_frame.pop(item="label").values
+    y_train = train_frame.pop(item="label").values
+    #print(y_train.shape)
+    y_valid = valid_frame.pop(item="label").values
+    #print(y_valid.shape)
 
     # trans format
     X_train = train_frame.astype(np.float32).values
