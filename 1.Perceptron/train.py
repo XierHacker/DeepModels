@@ -14,14 +14,24 @@ MODEL_SAVING_PATH="./saved_models/model.ckpt"
 
 #load data
 X_train,y_train,X_valid,y_valid,X_test=preprocessing.load_mnist(path="../../data/mnist/")
-train_samples=X_train.shape[0]
-valid_samples=X_valid.shape[0]
+train_size=X_train.shape[0]
+valid_size=X_valid.shape[0]
 
 def train():
     #data placeholder
     X_p=tf.placeholder(dtype=tf.float32,shape=(None,perceptron.INPUT_DIM),name="X_p")
     y_p=tf.placeholder(dtype=tf.int32,shape=(None,),name="y_p")
     y_hot_p=tf.one_hot(indices=y_p,depth=perceptron.OUTPUT_DIM)
+
+    #dataset API
+    dataset_train=tf.data.Dataset.from_tensor_slices(
+        tensors=(X_train,y_train)
+    ).repeat().batch(batch_size=BATCH_SIZE).shuffle(buffer_size=2)
+    #iterator
+    iterator=dataset_train.make_one_shot_iterator()
+    #get batch
+    batch=iterator.get_next()
+
 
     #use regularizer
     regularizer=tf.contrib.layers.l2_regularizer(0.0001)
@@ -47,15 +57,13 @@ def train():
         for i in range(MAX_EPOCH):
             ls = []
             accus=[]
-            for j in range(train_samples // BATCH_SIZE):
+            for j in range(train_size // BATCH_SIZE):
+                elements=sess.run(batch)
                 _, l ,prediction= sess.run(
-                    fetches=[optimizer, loss,pred],
-                    feed_dict={
-                        X_p: X_train[j * BATCH_SIZE:(j + 1) * BATCH_SIZE],
-                        y_p: y_train[j * BATCH_SIZE:(j + 1) * BATCH_SIZE]
-                    }
+                    fetches=[optimizer, loss, pred],
+                    feed_dict={X_p: elements[0],y_p: elements[1]}
                 )
-                accu=accuracy_score(y_true=y_train[j * BATCH_SIZE:(j + 1) * BATCH_SIZE],y_pred=prediction)
+                accu=accuracy_score(y_true=elements[1],y_pred=prediction)
                 accus.append(accu)
                 ls.append(l)
 

@@ -41,8 +41,8 @@ class Perceptron():
                 dtype=tf.float32,
                 initializer=tf.initializers.constant()
             )
-            layer1 = tf.matmul(X, weights) + biases
-            return layer1
+            logits = tf.matmul(X, weights) + biases
+            return logits
 
 
 if __name__=="__main__":
