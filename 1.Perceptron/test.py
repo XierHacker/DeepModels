@@ -8,7 +8,6 @@ from sklearn.metrics import accuracy_score
 import perceptron
 from utility import preprocessing
 
-
 MAX_EPOCH=10
 BATCH_SIZE=20
 LEARNING_RATE=0.001
@@ -37,7 +36,6 @@ def test():
     with tf.Session() as sess:
         #restore
         saver.restore(sess=sess,save_path=MODEL_SAVING_PATH)
-
         #prediction
         l, prediction = sess.run(
             fetches=[loss, pred],
@@ -45,7 +43,6 @@ def test():
         )
         accu = accuracy_score(y_true=y_train, y_pred=prediction)
         print("-loss:", l, "-accuracy:", accu)
-
 
 if __name__=="__main__":
     test()

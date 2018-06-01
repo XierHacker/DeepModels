@@ -23,26 +23,35 @@ class Perceptron():
             dtype=tf.float32,
             initializer=tf.initializers.truncated_normal(stddev=0.1)
         )
-
         if regularizer!=None:
             tf.add_to_collection(name="regularized",value=regularizer(weights))
         return weights
 
-
-    def forward(self,X,regularizer):
-        with tf.variable_scope("layer1"):
+    #pytorch API like
+    def linear(self,variable_scope,X,weights_shape,regularizer):
+        with tf.variable_scope(variable_scope):
             weights = self.get_weights_variable(
-                shape=(self.input_dim, self.output_dim),
+                shape=weights_shape,
                 regularizer=regularizer
             )
+
             biases = tf.get_variable(
                 name="biases",
-                shape=(self.output_dim,),
+                shape=(weights_shape[1],),
                 dtype=tf.float32,
                 initializer=tf.initializers.constant()
             )
             logits = tf.matmul(X, weights) + biases
             return logits
+
+    def forward(self,X,regularizer):
+        logits=self.linear(
+            variable_scope="layer1",
+            X=X,
+            weights_shape=(self.input_dim,self.output_dim),
+            regularizer=regularizer
+        )
+        return logits
 
 
 if __name__=="__main__":
