@@ -191,7 +191,7 @@ def dog2tfrecords(folder,out_path,is_train):
         pass
 
 
-def generate_dog_batch(tfrecords_path,batch_size):
+def generate_dog_batch(tfrecords_path,batch_size,is_train=True):
     # tfrecord 文件列表
     file_list = [tfrecords_path]
 
@@ -213,6 +213,14 @@ def generate_dog_batch(tfrecords_path,batch_size):
         # decode raw
         image = tf.decode_raw(bytes=raw, out_type=tf.uint8)
         image = tf.reshape(tensor=image, shape=(250, 250, 3))
+
+
+        if is_train:
+            # data argumentation and crop
+            #flip
+            image=tf.image.random_flip_left_right(image=image)
+            image=tf.image.random_flip_up_down(image=image)
+
         # crop
         image = tf.image.resize_image_with_crop_or_pad(image=image, target_height=224, target_width=224)
         # trans to float

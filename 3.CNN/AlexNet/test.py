@@ -15,7 +15,7 @@ LEARNING_RATE=0.001
 MODEL_SAVING_PATH="./saved_models/model.ckpt-8"
 TFRECORDS_PATH="../../data/DogsVsCats/dog_vs_cat_valid.tfrecords"
 
-valid_size=5000
+valid_size=200
 
 
 def test():
@@ -31,7 +31,8 @@ def test():
     # use dataset API
     batch = preprocessing.generate_dog_batch(
         tfrecords_path=TFRECORDS_PATH,
-        batch_size=valid_size
+        batch_size=valid_size,
+        is_train=False
     )
 
     #inference
@@ -50,7 +51,7 @@ def test():
         images,labels=sess.run(batch)
         #prediction
         l, prediction = sess.run(fetches=[loss, pred],feed_dict={X_p: images,y_p: labels})
-        accu = accuracy_score(y_true=y_train, y_pred=prediction)
+        accu = accuracy_score(y_true=labels, y_pred=prediction)
         print("-loss:", l, "-accuracy:", accu)
 
 if __name__=="__main__":
