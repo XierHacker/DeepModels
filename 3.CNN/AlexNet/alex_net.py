@@ -5,8 +5,6 @@ import tensorflow as tf
 #you can modify this according your task
 INPUT_HIGHT=224
 INPUT_WEIGHT=224
-#NUM_HIDDEN_1=300
-#NUN_HIDDEN_2=100
 OUTPUT_DIM=2
 
 
@@ -14,8 +12,6 @@ class AlexNet():
     def __init__(self):
         #basic environment
         #self.input_dim=INPUT_DIM
-        #self.num_hidden_1=NUM_HIDDEN_1
-        #self.num_hidden_2=NUN_HIDDEN_2
         self.output_dim=OUTPUT_DIM
 
     def get_weights_variable(self,shape,regularizer):
@@ -50,7 +46,7 @@ class AlexNet():
                 initializer=tf.initializers.constant()
             )
             #conv
-            conv=tf.nn.conv2d(input=X,filter=filter_weights,strides=[0,stride[0],stride[1],0],padding=padding)
+            conv=tf.nn.conv2d(input=X,filter=filter_weights,strides=[1,stride[0],stride[1],1],padding=padding,data_format="NHWC")
             feature_map=tf.nn.bias_add(value=conv,bias=filter_bias)
             return feature_map
 
@@ -148,7 +144,7 @@ class AlexNet():
             weights_shape=(4096, self.output_dim),regularizer=regularizer
         )
         # activate
-        logits_fc3 = tf.nn.softmax(logits=logits_fc3,axis=1)
+        #logits_fc3 = tf.nn.softmax(logits=logits_fc3,axis=1)
 
         return logits_fc3
 

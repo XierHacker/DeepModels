@@ -222,7 +222,7 @@ def generate_dog_batch(tfrecords_path,batch_size):
     # 使用map处理得到新的dataset
     dataset = dataset.map(map_func=_parse_data)
     # 使用batch_size为32生成mini-batch
-    dataset = dataset.batch(batch_size=batch_size).shuffle(buffer_size=2)
+    dataset = dataset.repeat().batch(batch_size=batch_size).shuffle(buffer_size=2)
     # 创建迭代器
     iterator = dataset.make_one_shot_iterator()
     batch = iterator.get_next()

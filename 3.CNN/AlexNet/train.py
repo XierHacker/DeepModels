@@ -1,4 +1,7 @@
 import os
+import sys
+sys.path.append("..")
+sys.path.append("../../")
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -7,12 +10,13 @@ import alex_net
 from utility import preprocessing
 
 
-MAX_EPOCH=10
+MAX_EPOCH=20
 BATCH_SIZE=64
-LEARNING_RATE=0.001
+LEARNING_RATE=0.0001
 MODEL_SAVING_PATH="./saved_models/model.ckpt"
+TFRECORDS_PATH="../../data/DogsVsCats/dog_vs_cat_train.tfrecords"
 
-train_size=10000
+train_size=20000
 
 def train():
     #data placeholder
@@ -26,7 +30,7 @@ def train():
 
     #use dataset API
     batch=preprocessing.generate_dog_batch(
-        tfrecords_path="../../data/DogsVsCats/dog_vs_cat_train.tfrecords",
+        tfrecords_path=TFRECORDS_PATH,
         batch_size=BATCH_SIZE
     )
 
@@ -53,12 +57,9 @@ def train():
             ls = []
             accus=[]
             for j in range(train_size // BATCH_SIZE):
-                elements=sess.run(batch)
-                _, l ,prediction= sess.run(
-                    fetches=[optimizer, loss, pred],
-                    feed_dict={X_p: elements[0],y_p: elements[1]}
-                )
-                accu=accuracy_score(y_true=elements[1],y_pred=prediction)
+                images,labels=sess.run(batch)
+                _, l ,prediction= sess.run(fetches=[optimizer, loss, pred],feed_dict={X_p: images,y_p: labels})
+                accu=accuracy_score(y_true=labels, y_pred=prediction)
                 accus.append(accu)
                 ls.append(l)
 
