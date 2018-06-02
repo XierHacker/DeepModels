@@ -9,24 +9,33 @@ from sklearn.metrics import accuracy_score
 import alex_net
 from utility import preprocessing
 
-MAX_EPOCH=10
+
 BATCH_SIZE=20
 LEARNING_RATE=0.001
 MODEL_SAVING_PATH="./saved_models/model.ckpt-8"
+TFRECORDS_PATH="../../data/DogsVsCats/dog_vs_cat_valid.tfrecords"
 
-#load data
-X_train,y_train,X_valid,y_valid,X_test=preprocessing.load_mnist(path="../../data/mnist/")
-train_samples=X_train.shape[0]
-valid_samples=X_valid.shape[0]
+valid_size=5000
+
 
 def test():
-    #data placeholder
-    X_p=tf.placeholder(dtype=tf.float32,shape=(None,perceptron.INPUT_DIM),name="X_p")
-    y_p=tf.placeholder(dtype=tf.int32,shape=(None,),name="y_p")
-    y_hot_p=tf.one_hot(indices=y_p,depth=perceptron.OUTPUT_DIM)
+    # data placeholder
+    X_p = tf.placeholder(
+        dtype=tf.float32,
+        shape=(None, alex_net.INPUT_HIGHT, alex_net.INPUT_WEIGHT, 3),
+        name="X_p"
+    )
+    y_p = tf.placeholder(dtype=tf.int32, shape=(None,), name="y_p")
+    y_hot_p = tf.one_hot(indices=y_p, depth=alex_net.OUTPUT_DIM)
+
+    # use dataset API
+    batch = preprocessing.generate_dog_batch(
+        tfrecords_path=TFRECORDS_PATH,
+        batch_size=valid_size
+    )
 
     #inference
-    model=mlp.MLP()
+    model=alex_net.AlexNet()
     logits=model.forward(X_p,regularizer=None)           #[batch_size,10]
     pred=tf.argmax(input=logits,axis=-1)            #[batch_size,]
 
@@ -37,11 +46,10 @@ def test():
     with tf.Session() as sess:
         #restore
         saver.restore(sess=sess,save_path=MODEL_SAVING_PATH)
+        #get data
+        images,labels=sess.run(batch)
         #prediction
-        l, prediction = sess.run(
-            fetches=[loss, pred],
-            feed_dict={X_p: X_train,y_p: y_train}
-        )
+        l, prediction = sess.run(fetches=[loss, pred],feed_dict={X_p: images,y_p: labels})
         accu = accuracy_score(y_true=y_train, y_pred=prediction)
         print("-loss:", l, "-accuracy:", accu)
 
