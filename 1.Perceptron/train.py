@@ -18,13 +18,17 @@ train_size=X_train.shape[0]
 valid_size=X_valid.shape[0]
 
 def train():
-    #data placeholder
-    X_p=tf.placeholder(dtype=tf.float32,shape=(None,perceptron.INPUT_DIM),name="X_p")
-    y_p=tf.placeholder(dtype=tf.int32,shape=(None,),name="y_p")
-    y_hot_p=tf.one_hot(indices=y_p,depth=perceptron.OUTPUT_DIM)
+    # data placeholder
+    #X_p = tf.placeholder(dtype=tf.float32, shape=(None, perceptron.INPUT_DIM), name="X_p")
+    #y_p = tf.placeholder(dtype=tf.int32, shape=(None,), name="y_p")
+    #y_hot_p = tf.one_hot(indices=y_p, depth=perceptron.OUTPUT_DIM)
 
     #use dataset API
     batch=preprocessing.generate_mnist_batch(X=X_train,y=y_train,batch_size=BATCH_SIZE)
+
+    X_p=batch[0]
+    y_p=batch[1]
+    y_hot_p=tf.one_hot(indices=y_p,depth=perceptron.OUTPUT_DIM)
 
     #use regularizer
     regularizer=tf.contrib.layers.l2_regularizer(0.0001)
@@ -33,6 +37,10 @@ def train():
     model=perceptron.Perceptron()
     logits=model.forward(X_p,regularizer)           #[batch_size,10]
     pred=tf.argmax(input=logits,axis=-1)            #[batch_size,]
+
+    #accuracy
+    correct_prediction=tf.equal(pred,y_p)
+    accuracy=tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
 
     #collect_list=tf.get_collection(key="regularized")
     #print("collect_list.shape",collect_list)
@@ -51,12 +59,8 @@ def train():
             ls = []
             accus=[]
             for j in range(train_size // BATCH_SIZE):
-                elements=sess.run(batch)
-                _, l ,prediction= sess.run(
-                    fetches=[optimizer, loss, pred],
-                    feed_dict={X_p: elements[0],y_p: elements[1]}
-                )
-                accu=accuracy_score(y_true=elements[1],y_pred=prediction)
+                #elements=sess.run(batch)
+                _, l ,accu= sess.run(fetches=[optimizer, loss, accuracy])
                 accus.append(accu)
                 ls.append(l)
 

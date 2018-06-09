@@ -2,6 +2,7 @@ import os
 import sys
 sys.path.append("..")
 sys.path.append("../../")
+import time
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -54,6 +55,8 @@ def train():
     with tf.Session() as sess:
         sess.run(init)
         for i in range(MAX_EPOCH):
+            print("Epoch:",i+1)
+            start_time=time.time()
             ls = []
             accus=[]
             for j in range(train_size // BATCH_SIZE):
@@ -63,7 +66,9 @@ def train():
                 accus.append(accu)
                 ls.append(l)
 
-            print("Epoch:", i, "-loss:",sum(ls) / len(ls),"-accuracy:",sum(accus)/len(accus))
+            end_time=time.time()
+            print("spend ",(end_time-start_time)/60,"mins")
+            print("--loss:",sum(ls) / len(ls),"--accuracy:",sum(accus)/len(accus))
 
             #sava models
             saver.save(sess=sess,save_path=MODEL_SAVING_PATH,global_step=i)
