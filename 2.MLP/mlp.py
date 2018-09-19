@@ -7,10 +7,85 @@ import tensorflow as tf
 
 #you can modify this according your task
 INPUT_DIM=784
-NUM_HIDDEN_1=300
-NUN_HIDDEN_2=100
+NUM_HIDDEN_1=50
+NUN_HIDDEN_2=50
 OUTPUT_DIM=10
 
+
+class MLP():
+    def __init__(self):
+        #basic environment
+        self.input_dim=INPUT_DIM
+        self.num_hidden_1=NUM_HIDDEN_1
+        self.num_hidden_2=NUN_HIDDEN_2
+        self.output_dim=OUTPUT_DIM
+
+
+    def forward(self,X,regularizer):
+        logits_fc1=tf.layers.dense(
+            inputs=X,
+            units=self.num_hidden_1,
+            activation=None,
+            use_bias=True,
+            kernel_initializer=tf.contrib.layers.xavier_initializer(),
+            bias_initializer=tf.initializers.constant(0.1),
+            kernel_regularizer=regularizer,
+            bias_regularizer=regularizer,
+            #activity_regularizer=regularizer,
+            trainable=True,
+            name="logits_fc1",
+            reuse=None
+        )
+        #logits_fc1=tf.nn.relu(features=logits_fc1)
+
+        logits_fc2 = tf.layers.dense(
+            inputs=logits_fc1,
+            units=self.num_hidden_2,
+            activation=None,
+            use_bias=True,
+            kernel_initializer=tf.contrib.layers.xavier_initializer(),
+            bias_initializer=tf.initializers.constant(0.1),
+            kernel_regularizer=regularizer,
+            bias_regularizer=regularizer,
+            # activity_regularizer=regularizer,
+            trainable=True,
+            name="logits_fc2",
+            reuse=None
+        )
+        #logits_fc2 = tf.nn.relu(features=logits_fc2)
+
+        logits_fc3 = tf.layers.dense(
+            inputs=logits_fc2,
+            units=self.output_dim,
+            activation=None,
+            use_bias=True,
+            kernel_initializer=tf.contrib.layers.xavier_initializer(),
+            bias_initializer=tf.initializers.constant(0.1),
+            kernel_regularizer=regularizer,
+            bias_regularizer=regularizer,
+            # activity_regularizer=regularizer,
+            trainable=True,
+            name="logits_fc3",
+            reuse=None
+        )
+        #logits_fc3 = tf.nn.relu(features=logits_fc3)
+        return logits_fc3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+#-----------------------------------------Old Version-----------------------------------#
 class MLP():
     def __init__(self):
         #basic environment
@@ -80,3 +155,4 @@ if __name__=="__main__":
     print(weights)
     re=tf.get_collection(key="regularized")
     print(re)
+'''
