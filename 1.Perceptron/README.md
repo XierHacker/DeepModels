@@ -1,0 +1,3 @@
+## Perceptron
+
+`python train.py`

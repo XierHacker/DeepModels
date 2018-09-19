@@ -7,37 +7,6 @@ import pandas as pd
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-def mnist2tfrecord(in_path,out_path):
-    pass
-
-def load_mnist(path):
-    train_frame = pd.read_csv(path+"train.csv")[:40000]
-    valid_frame = pd.read_csv(path + "train.csv")[40000:]
-    test_frame = pd.read_csv(path+"test.csv")
-
-    y_train = train_frame.pop(item="label").values
-    #print(y_train.shape)
-    y_valid = valid_frame.pop(item="label").values
-    #print(y_valid.shape)
-
-    # trans format
-    X_train = train_frame.astype(np.float32).values
-    X_valid = valid_frame.astype(np.float32).values
-    X_test = test_frame.astype(np.float32).values
-
-    return X_train,y_train,X_valid,y_valid,X_test
-
-def generate_mnist_batch(X,y,batch_size):
-    #dataset API
-    dataset_train=tf.data.Dataset.from_tensor_slices(
-        tensors=(X,y)
-    ).repeat().batch(batch_size=batch_size).shuffle(buffer_size=2)
-    #iterator
-    iterator=dataset_train.make_one_shot_iterator()
-    #get batch
-    batch=iterator.get_next()
-    return batch
-
 
 def cifar2tfrecord(in_path,out_name,is_train):
     # mapping name to number
