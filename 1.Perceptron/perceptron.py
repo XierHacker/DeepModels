@@ -5,11 +5,43 @@
 
 import numpy as np
 import tensorflow as tf
-
 #you can modify this according your task
 INPUT_DIM=784
 OUTPUT_DIM=10
 
+class Perceptron():
+    def __init__(self):
+        #basic environment
+        self.input_dim=INPUT_DIM
+        self.output_dim=OUTPUT_DIM
+
+    def forward(self,X,regularizer):
+        logits=tf.layers.dense(
+            inputs=X,
+            units=self.output_dim,
+            activation=tf.nn.relu,
+            use_bias=True,
+            kernel_initializer=tf.contrib.layers.xavier_initializer(),
+            bias_initializer=tf.initializers.constant(),
+            kernel_regularizer=regularizer,
+            bias_regularizer=None,
+            activity_regularizer=None,
+            trainable=True,
+            name="logits"
+        )
+        return logits
+
+
+
+
+
+
+
+
+
+
+'''
+#-------------------------------------Old Version-------------------------------------------------#
 class Perceptron():
     def __init__(self):
         #basic environment
@@ -63,6 +95,8 @@ if __name__=="__main__":
     print(weights)
     re=tf.get_collection(key="regularized")
     print(re)
+'''
+
 
 
 

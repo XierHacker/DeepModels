@@ -8,6 +8,8 @@ from sklearn.metrics import accuracy_score
 import perceptron
 from utility import preprocessing
 
+#no info
+os.environ["TF_CPP_MIN_LOG_LEVEL"]='2'
 
 TRAIN_SIZE=preprocessing.getTFRecordsAmount(tfFile="../dataset/MNIST/mnist_train.tfrecords")
 print("train_size:",TRAIN_SIZE)
