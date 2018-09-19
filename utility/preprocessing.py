@@ -8,6 +8,19 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 
 
+def getTFRecordsAmount(tfFile):
+    '''
+    统计tfrecords中样本数量
+    :param tfFile: 相应样本集的tfrecords文件
+    :return:    样本总数量
+    '''
+    num = 0
+    for record in tf.python_io.tf_record_iterator(tfFile):
+        num += 1
+    return num
+
+
+
 def cifar2tfrecord(in_path,out_name,is_train):
     # mapping name to number
     mapping_dict = {

@@ -1,4 +1,6 @@
 import os
+import sys
+sys.path.append("../")
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -7,6 +9,8 @@ import perceptron
 from utility import preprocessing
 
 
+TRAIN_SIZE=preprocessing.getTFRecordsAmount(tfFile="../dataset/MNIST/mnist_train.tfrecords")
+print("train_size:",TRAIN_SIZE)
 MAX_EPOCH=10
 BATCH_SIZE=20
 LEARNING_RATE=0.001
@@ -23,7 +27,7 @@ def _parse_data(example_proto):
         }
     )
     # get single feature
-    raw = parsed_features["image_raw"]
+    image = parsed_features["image_raw"]
     label = parsed_features["label"]
     # decode raw
     # image = tf.decode_raw(bytes=raw, out_type=tf.int64)
@@ -35,7 +39,7 @@ def _parse_data(example_proto):
 def train(tfrecords_list):
     # data placeholder
     X_p = tf.placeholder(dtype=tf.float32, shape=(None, 784), name="X_p")
-    y_p = tf.placeholder(dtype=tf.int32, shape=(None,), name="y_p")
+    y_p = tf.placeholder(dtype=tf.int64, shape=(None,), name="y_p")
     y_hot_p = tf.one_hot(indices=y_p, depth=10)
 
     #----------------------------------------use dataset API--------------------------------------
@@ -75,11 +79,11 @@ def train(tfrecords_list):
         for i in range(MAX_EPOCH):
             ls = []
             accus=[]
-            for j in range(train_size // BATCH_SIZE):
+            for j in range(TRAIN_SIZE // BATCH_SIZE):
                 image_,label_=sess.run(next_element)
                 _, l ,accu= sess.run(
                     fetches=[optimizer, loss, accuracy],
-                    feed={X_p:image_,y_p:label_}
+                    feed_dict={X_p:image_,y_p:label_}
                 )
                 accus.append(accu)
                 ls.append(l)
