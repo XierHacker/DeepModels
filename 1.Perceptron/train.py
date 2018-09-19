@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 sys.path.append("../")
 import numpy as np
 import pandas as pd
@@ -13,7 +14,7 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"]='2'
 
 TRAIN_SIZE=preprocessing.getTFRecordsAmount(tfFile="../dataset/MNIST/mnist_train.tfrecords")
 print("train_size:",TRAIN_SIZE)
-MAX_EPOCH=10
+MAX_EPOCH=8
 BATCH_SIZE=20
 LEARNING_RATE=0.001
 MODEL_SAVING_PATH="./saved_models/model.ckpt"
@@ -40,8 +41,8 @@ def _parse_data(example_proto):
 
 def train(tfrecords_list):
     # data placeholder
-    X_p = tf.placeholder(dtype=tf.float32, shape=(None, 784), name="X_p")
-    y_p = tf.placeholder(dtype=tf.int64, shape=(None,), name="y_p")
+    X_p = tf.placeholder(dtype=tf.float32, shape=(BATCH_SIZE, 784), name="X_p")
+    y_p = tf.placeholder(dtype=tf.int64, shape=(BATCH_SIZE,), name="y_p")
     y_hot_p = tf.one_hot(indices=y_p, depth=10)
 
     #----------------------------------------use dataset API--------------------------------------
@@ -56,7 +57,7 @@ def train(tfrecords_list):
     next_element = iterator.get_next()
 
     #use regularizer
-    regularizer=tf.contrib.layers.l2_regularizer(0.0001)
+    regularizer=tf.contrib.layers.l2_regularizer(0.005)
 
     #model
     model=perceptron.Perceptron()
@@ -67,8 +68,9 @@ def train(tfrecords_list):
     correct_prediction=tf.equal(pred,y_p)
     accuracy=tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
 
-    loss=tf.losses.softmax_cross_entropy(onehot_labels=y_hot_p,logits=logits)+\
-                        tf.add_n(inputs=tf.get_collection(key="regularized"))
+    #L-2 loss
+    l2_loss=tf.losses.get_regularization_loss()
+    loss=tf.losses.softmax_cross_entropy(onehot_labels=y_hot_p,logits=logits)+l2_loss
     optimizer=tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(loss=loss)
 
     init=tf.global_variables_initializer()
@@ -77,8 +79,10 @@ def train(tfrecords_list):
     saver=tf.train.Saver()
 
     with tf.Session() as sess:
+
         sess.run(init)
         for i in range(MAX_EPOCH):
+            start_time=time.time()
             ls = []
             accus=[]
             for j in range(TRAIN_SIZE // BATCH_SIZE):
@@ -90,8 +94,9 @@ def train(tfrecords_list):
                 accus.append(accu)
                 ls.append(l)
 
-            print("Epoch:", i, "-loss:",sum(ls) / len(ls),"-accuracy:",sum(accus)/len(accus))
 
+            print("Epoch:", i, "-loss:",sum(ls) / len(ls),"-accuracy:",sum(accus)/len(accus))
+            print("Spend: ", time.time() - start_time, " Seconds")
             #sava models
             saver.save(sess=sess,save_path=MODEL_SAVING_PATH,global_step=i)
 

@@ -19,24 +19,18 @@ class Perceptron():
         logits=tf.layers.dense(
             inputs=X,
             units=self.output_dim,
-            activation=tf.nn.relu,
+            activation=None,
             use_bias=True,
             kernel_initializer=tf.contrib.layers.xavier_initializer(),
-            bias_initializer=tf.initializers.constant(),
+            bias_initializer=tf.initializers.constant(0.1),
             kernel_regularizer=regularizer,
-            bias_regularizer=None,
-            activity_regularizer=None,
+            bias_regularizer=regularizer,
+            #activity_regularizer=regularizer,
             trainable=True,
-            name="logits"
+            name="logits",
+            reuse=None
         )
         return logits
-
-
-
-
-
-
-
 
 
 
