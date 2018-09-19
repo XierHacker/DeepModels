@@ -25,7 +25,7 @@ class MLP():
         logits_fc1=tf.layers.dense(
             inputs=X,
             units=self.num_hidden_1,
-            activation=None,
+            activation=tf.nn.relu,
             use_bias=True,
             kernel_initializer=tf.contrib.layers.xavier_initializer(),
             bias_initializer=tf.initializers.constant(0.1),
@@ -36,12 +36,10 @@ class MLP():
             name="logits_fc1",
             reuse=None
         )
-        #logits_fc1=tf.nn.relu(features=logits_fc1)
-
         logits_fc2 = tf.layers.dense(
             inputs=logits_fc1,
             units=self.num_hidden_2,
-            activation=None,
+            activation=tf.nn.relu,
             use_bias=True,
             kernel_initializer=tf.contrib.layers.xavier_initializer(),
             bias_initializer=tf.initializers.constant(0.1),
@@ -52,12 +50,11 @@ class MLP():
             name="logits_fc2",
             reuse=None
         )
-        #logits_fc2 = tf.nn.relu(features=logits_fc2)
 
         logits_fc3 = tf.layers.dense(
             inputs=logits_fc2,
             units=self.output_dim,
-            activation=None,
+            activation=tf.nn.relu,
             use_bias=True,
             kernel_initializer=tf.contrib.layers.xavier_initializer(),
             bias_initializer=tf.initializers.constant(0.1),
@@ -68,7 +65,7 @@ class MLP():
             name="logits_fc3",
             reuse=None
         )
-        #logits_fc3 = tf.nn.relu(features=logits_fc3)
+
         return logits_fc3
 
 

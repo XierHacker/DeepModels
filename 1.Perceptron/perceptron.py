@@ -19,7 +19,7 @@ class Perceptron():
         logits=tf.layers.dense(
             inputs=X,
             units=self.output_dim,
-            activation=None,
+            activation=tf.nn.relu,
             use_bias=True,
             kernel_initializer=tf.contrib.layers.xavier_initializer(),
             bias_initializer=tf.initializers.constant(0.1),

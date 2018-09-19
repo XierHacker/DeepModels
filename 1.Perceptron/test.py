@@ -27,10 +27,8 @@ def _parse_data(example_proto):
     )
     # get single feature
     image = parsed_features["image_raw"]
+    image=image/255
     label = parsed_features["label"]
-    # decode raw
-    # image = tf.decode_raw(bytes=raw, out_type=tf.int64)
-    #image = tf.reshape(tensor=raw, shape=[28, 28])
     return image, label
 
 
