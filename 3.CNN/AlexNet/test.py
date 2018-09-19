@@ -13,9 +13,7 @@ from utility import preprocessing
 TEST_SIZE=preprocessing.getTFRecordsAmount(tfFile="../../dataset/Dogs_VS_Cats/dog_vs_cat_valid.tfrecords")
 print("test_size:",TEST_SIZE)
 
-MAX_EPOCH=20
-BATCH_SIZE=64
-LEARNING_RATE=0.0001
+
 MODEL_SAVINT_PATH="./saved_models/model.ckpt-8"
 
 

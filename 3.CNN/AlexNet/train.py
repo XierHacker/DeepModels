@@ -15,7 +15,7 @@ print("train_size:",TRAIN_SIZE)
 
 MAX_EPOCH=20
 BATCH_SIZE=64
-LEARNING_RATE=0.0001
+LEARNING_RATE=0.001
 MODEL_SAVING_PATH="./saved_models/model.ckpt"
 
 
