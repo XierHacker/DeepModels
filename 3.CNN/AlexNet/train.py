@@ -10,33 +10,60 @@ from sklearn.metrics import accuracy_score
 import alex_net
 from utility import preprocessing
 
+TRAIN_SIZE=preprocessing.getTFRecordsAmount(tfFile="../../dataset/Dogs_VS_Cats/dog_vs_cat_train.tfrecords")
+print("train_size:",TRAIN_SIZE)
 
 MAX_EPOCH=20
 BATCH_SIZE=64
 LEARNING_RATE=0.0001
 MODEL_SAVING_PATH="./saved_models/model.ckpt"
-TFRECORDS_PATH="../../data/DogsVsCats/dog_vs_cat_train.tfrecords"
 
-train_size=20000
 
-def train():
+# 定义解析和预处理函数
+def _parse_data(example_proto):
+    parsed_features = tf.parse_single_example(
+        serialized=example_proto,
+        features={
+            "image_raw": tf.FixedLenFeature(shape=[], dtype=tf.string),
+            "label": tf.FixedLenFeature(shape=[], dtype=tf.int64)
+        }
+    )
+    # get single feature
+    raw = parsed_features["image_raw"]
+    label = parsed_features["label"]
+    # decode raw
+    image = tf.decode_raw(bytes=raw, out_type=tf.uint8)
+    image = tf.reshape(tensor=image, shape=(250, 250, 3))
+
+    # flip
+    image = tf.image.random_flip_left_right(image=image)
+    # crop
+    image = tf.image.resize_image_with_crop_or_pad(image=image, target_height=224, target_width=224)
+    # trans to float
+    image = tf.image.convert_image_dtype(image=image, dtype=tf.float32)
+    return image, label
+
+
+def train(tfrecords_list):
     #data placeholder
-    X_p=tf.placeholder(
-        dtype=tf.float32,
-        shape=(None,alex_net.INPUT_HIGHT,alex_net.INPUT_WEIGHT,3),
-        name="X_p"
-    )
-    y_p=tf.placeholder(dtype=tf.int32,shape=(None,),name="y_p")
-    y_hot_p=tf.one_hot(indices=y_p,depth=alex_net.OUTPUT_DIM)
+    X_p=tf.placeholder(dtype=tf.float32,shape=(None,224,224,3),name="X_p")
+    y_p=tf.placeholder(dtype=tf.int64,shape=(None,),name="y_p")
+    y_hot_p=tf.one_hot(indices=y_p,depth=2)
 
-    #use dataset API
-    batch=preprocessing.generate_dog_batch(
-        tfrecords_path=TFRECORDS_PATH,
-        batch_size=BATCH_SIZE
-    )
+    # ----------------------------------------use dataset API--------------------------------------
+    # 创建dataset对象
+    dataset = tf.data.TFRecordDataset(filenames=tfrecords_list)
+    # 使用map处理得到新的dataset
+    dataset = dataset.map(map_func=_parse_data)
+    dataset = dataset.batch(BATCH_SIZE).shuffle(buffer_size=2).repeat()
+
+    # 创建迭代器
+    iterator = dataset.make_one_shot_iterator()
+    next_element = iterator.get_next()
+    #-----------------------------------------------------------------------------------------------
 
     #use regularizer
-    regularizer=tf.contrib.layers.l2_regularizer(0.0001)
+    regularizer=tf.contrib.layers.l2_regularizer(0.005)
     #model
     model=alex_net.AlexNet()
     logits=model.forward(X_p,regularizer)           #[batch_size,10]
@@ -59,8 +86,8 @@ def train():
             start_time=time.time()
             ls = []
             accus=[]
-            for j in range(train_size // BATCH_SIZE):
-                images,labels=sess.run(batch)
+            for j in range(TRAIN_SIZE // BATCH_SIZE):
+                images,labels=sess.run(next_element)
                 _, l ,prediction= sess.run(fetches=[optimizer, loss, pred],feed_dict={X_p: images,y_p: labels})
                 accu=accuracy_score(y_true=labels, y_pred=prediction)
                 accus.append(accu)
@@ -75,4 +102,4 @@ def train():
 
 
 if __name__=="__main__":
-    train()
+    train(["../../dataset/Dogs_VS_Cats/dog_vs_cat_train.tfrecords"])
