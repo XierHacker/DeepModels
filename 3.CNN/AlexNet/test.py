@@ -10,7 +10,7 @@ from sklearn.metrics import accuracy_score
 import alex_net
 from utility import preprocessing
 
-TEST_SIZE=preprocessing.getTFRecordsAmount(tfFile="../../dataset/Dogs_VS_Cats/dog_vs_cat_valid.tfrecords")
+TEST_SIZE=preprocessing.getTFRecordsAmount(tfFile="../../dataset/Dogs_VS_Cats/dog_vs_cat_valid.tfrecords")//5
 print("test_size:",TEST_SIZE)
 
 
@@ -52,7 +52,7 @@ def test(tfrecords_list):
     dataset = tf.data.TFRecordDataset(filenames=tfrecords_list)
     # 使用map处理得到新的dataset
     dataset = dataset.map(map_func=_parse_data)
-    dataset = dataset.batch(TEST_SIZE).shuffle(buffer_size=2).repeat()
+    dataset = dataset.batch(TEST_SIZE)
 
     # 创建迭代器
     iterator = dataset.make_one_shot_iterator()
@@ -66,10 +66,11 @@ def test(tfrecords_list):
     logits=model.forward(X_p,regularizer)           #[batch_size,10]
     pred=tf.argmax(input=logits,axis=-1)            #[batch_size,]
 
-    #collect_list=tf.get_collection(key="regularized")
-    #print("collect_list.shape",collect_list)
+    # accuracy
+    correct_prediction = tf.equal(pred, y_p)
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     loss=tf.losses.softmax_cross_entropy(onehot_labels=y_hot_p,logits=logits)
-    optimizer=tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(loss=loss)
+    #optimizer=tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(loss=loss)
 
     init=tf.global_variables_initializer()
 
@@ -78,10 +79,11 @@ def test(tfrecords_list):
 
     with tf.Session() as sess:
         sess.run(init)
+        # restore
+        saver.restore(sess=sess, save_path=MODEL_SAVINT_PATH)
         start_time=time.time()
         images,labels=sess.run(next_element)
-        l ,prediction= sess.run(fetches=[loss, pred],feed_dict={X_p: images,y_p: labels})
-        accu=accuracy_score(y_true=labels, y_pred=prediction)
+        l ,accu= sess.run(fetches=[loss, accuracy],feed_dict={X_p: images,y_p: labels})
         end_time=time.time()
         print("spend ",(end_time-start_time)/60,"mins")
         print("--loss:",l,"--accuracy:",accu)

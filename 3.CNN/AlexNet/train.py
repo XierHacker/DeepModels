@@ -36,7 +36,7 @@ def _parse_data(example_proto):
     image = tf.reshape(tensor=image, shape=(250, 250, 3))
 
     # flip
-    image = tf.image.random_flip_left_right(image=image)
+    #image = tf.image.random_flip_left_right(image=image)
     # crop
     image = tf.image.resize_image_with_crop_or_pad(image=image, target_height=224, target_width=224)
     # trans to float
@@ -63,15 +63,19 @@ def train(tfrecords_list):
     #-----------------------------------------------------------------------------------------------
 
     #use regularizer
-    regularizer=tf.contrib.layers.l2_regularizer(0.005)
+    regularizer=tf.contrib.layers.l2_regularizer(0.0001)
     #model
     model=alex_net.AlexNet()
     logits=model.forward(X_p,regularizer)           #[batch_size,10]
     pred=tf.argmax(input=logits,axis=-1)            #[batch_size,]
 
-    #collect_list=tf.get_collection(key="regularized")
-    #print("collect_list.shape",collect_list)
-    loss=tf.losses.softmax_cross_entropy(onehot_labels=y_hot_p,logits=logits)+tf.add_n(inputs=tf.get_collection(key="regularized"))
+    # accuracy
+    correct_prediction = tf.equal(pred, y_p)
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+    # L-2 loss
+    l2_loss = tf.losses.get_regularization_loss()
+    loss=tf.losses.softmax_cross_entropy(onehot_labels=y_hot_p,logits=logits)+l2_loss
     optimizer=tf.train.AdamOptimizer(learning_rate=LEARNING_RATE).minimize(loss=loss)
 
     init=tf.global_variables_initializer()
@@ -88,8 +92,8 @@ def train(tfrecords_list):
             accus=[]
             for j in range(TRAIN_SIZE // BATCH_SIZE):
                 images,labels=sess.run(next_element)
-                _, l ,prediction= sess.run(fetches=[optimizer, loss, pred],feed_dict={X_p: images,y_p: labels})
-                accu=accuracy_score(y_true=labels, y_pred=prediction)
+                _, l ,accu= sess.run(fetches=[optimizer, loss, accuracy],feed_dict={X_p: images,y_p: labels})
+                #accu=accuracy_score(y_true=labels, y_pred=prediction)
                 accus.append(accu)
                 ls.append(l)
 
