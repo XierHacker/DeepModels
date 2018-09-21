@@ -10,6 +10,9 @@ from sklearn.metrics import accuracy_score
 import alex_net
 from utility import preprocessing
 
+#no info
+os.environ["TF_CPP_MIN_LOG_LEVEL"]='2'
+
 TEST_SIZE=preprocessing.getTFRecordsAmount(tfFile="../../dataset/Dogs_VS_Cats/dog_vs_cat_valid.tfrecords")//5
 print("test_size:",TEST_SIZE)
 
@@ -41,7 +44,7 @@ def _parse_data(example_proto):
     return image, label
 
 
-def test(tfrecords_list,model_path):
+def test(tfrecords_list,model_path,reuse):
     #data placeholder
     X_p=tf.placeholder(dtype=tf.float32,shape=(None,224,224,3),name="X_p")
     y_p=tf.placeholder(dtype=tf.int64,shape=(None,),name="y_p")
@@ -64,7 +67,7 @@ def test(tfrecords_list,model_path):
     regularizer=None
     #model
     model=alex_net.AlexNet()
-    logits=model.forward(X_p,regularizer,keep_rate_p,False)           #[batch_size,10]
+    logits=model.forward(X_p,regularizer,keep_rate_p,True,reuse)           #[batch_size,10]
     pred=tf.argmax(input=logits,axis=-1)            #[batch_size,]
 
     # accuracy
@@ -95,6 +98,10 @@ def test(tfrecords_list,model_path):
 
 if __name__=="__main__":
     for i in range(20):
-        print("Model ",i,":")
-        test(["../../dataset/Dogs_VS_Cats/dog_vs_cat_valid.tfrecords"],MODEL_SAVINT_PATH+str(i))
+        print("Model:",i)
+        if i==0:
+            reuse=False
+        else:
+            reuse=True
+        test(["../../dataset/Dogs_VS_Cats/dog_vs_cat_valid.tfrecords"],MODEL_SAVINT_PATH+str(i),reuse)
         print()

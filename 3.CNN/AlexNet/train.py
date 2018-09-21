@@ -10,6 +10,9 @@ from sklearn.metrics import accuracy_score
 import alex_net
 from utility import preprocessing
 
+#no info
+os.environ["TF_CPP_MIN_LOG_LEVEL"]='2'
+
 TRAIN_SIZE=preprocessing.getTFRecordsAmount(tfFile="../../dataset/Dogs_VS_Cats/dog_vs_cat_train.tfrecords")
 print("train_size:",TRAIN_SIZE)
 
@@ -67,7 +70,7 @@ def train(tfrecords_list):
     regularizer=tf.contrib.layers.l2_regularizer(0.001)
     #model
     model=alex_net.AlexNet()
-    logits=model.forward(X_p,regularizer,keep_rate_p,True)           #[batch_size,10]
+    logits=model.forward(X_p,regularizer,keep_rate_p,True,False)           #[batch_size,10]
     pred=tf.argmax(input=logits,axis=-1)            #[batch_size,]
 
     # accuracy
