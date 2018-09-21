@@ -46,6 +46,7 @@ def test(tfrecords_list):
     X_p=tf.placeholder(dtype=tf.float32,shape=(None,224,224,3),name="X_p")
     y_p=tf.placeholder(dtype=tf.int64,shape=(None,),name="y_p")
     y_hot_p=tf.one_hot(indices=y_p,depth=2)
+    keep_rate_p = tf.placeholder(dtype=tf.float32, shape=(), name="keep_rate_p")
 
     # ----------------------------------------use dataset API--------------------------------------
     # 创建dataset对象
@@ -63,7 +64,7 @@ def test(tfrecords_list):
     regularizer=None
     #model
     model=alex_net.AlexNet()
-    logits=model.forward(X_p,regularizer)           #[batch_size,10]
+    logits=model.forward(X_p,regularizer,keep_rate_p)           #[batch_size,10]
     pred=tf.argmax(input=logits,axis=-1)            #[batch_size,]
 
     # accuracy
@@ -83,7 +84,10 @@ def test(tfrecords_list):
         saver.restore(sess=sess, save_path=MODEL_SAVINT_PATH)
         start_time=time.time()
         images,labels=sess.run(next_element)
-        l ,accu= sess.run(fetches=[loss, accuracy],feed_dict={X_p: images,y_p: labels})
+        l ,accu= sess.run(
+            fetches=[loss, accuracy],
+            feed_dict={X_p: images,y_p: labels,keep_rate_p:1.0}
+        )
         end_time=time.time()
         print("spend ",(end_time-start_time)/60,"mins")
         print("--loss:",l,"--accuracy:",accu)

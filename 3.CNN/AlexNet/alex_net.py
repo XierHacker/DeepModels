@@ -16,9 +16,9 @@ class AlexNet():
     def conv2d(self,X,out_channels, kernel_size, strides, padding,regularizer,name):
         logits_conv = tf.layers.conv2d(
             inputs=X,filters=out_channels,kernel_size=kernel_size,strides=strides,
-            padding=padding,activation=tf.nn.relu,use_bias=True,
-            kernel_initializer=tf.contrib.layers.xavier_initializer(),
-            bias_initializer=tf.initializers.constant(),
+            padding=padding,activation=None,use_bias=True,
+            #kernel_initializer=tf.contrib.layers.xavier_initializer(),
+            #bias_initializer=tf.initializers.constant(),
             kernel_regularizer=regularizer,bias_regularizer=regularizer,
             activity_regularizer=None,
             trainable=True,
@@ -27,24 +27,26 @@ class AlexNet():
         return logits_conv
 
     # pytorch-like
-    def linear(self, X, units,regularizer,name):
+    def linear(self, X, units,regularizer,keep_rate,name):
         logits_fc = tf.layers.dense(
             inputs=X,
             units=units,
-            activation=tf.nn.relu,
+            activation=None,
             use_bias=True,
-            kernel_initializer=tf.contrib.layers.xavier_initializer(),
-            bias_initializer=tf.initializers.constant(),
+            #kernel_initializer=tf.contrib.layers.xavier_initializer(),
+            #bias_initializer=tf.initializers.constant(),
             kernel_regularizer=regularizer,
             bias_regularizer=regularizer,
             activity_regularizer=None,
             trainable=True,
             name=name
         )
+        #dropout
+        logits_fc=tf.layers.dropout(inputs=logits_fc,rate=1-keep_rate)
         return logits_fc
 
 
-    def forward(self,X,regularizer):
+    def forward(self,X,regularizer,keep_rate):
         #-------------------------------------conv1------------------------------------------------------------
         logits_conv1=self.conv2d(X,96,(11,11),(4,4),"SAME",regularizer,"logits_conv1")
         #max pooling
@@ -75,13 +77,13 @@ class AlexNet():
         print("plat_logits_conv5:",plat_logits_conv5.shape)
 
         # -------------------------------------FC1------------------------------------------------------------
-        logits_fc1=self.linear(plat_logits_conv5,4096,regularizer,"logits_fc1")
+        logits_fc1=self.linear(plat_logits_conv5,4096,regularizer,keep_rate,"logits_fc1")
         print("logits_fc1.shape", logits_fc1.shape)
         # -------------------------------------FC2------------------------------------------------------------
-        logits_fc2 = self.linear(logits_fc1, 4096, regularizer, "logits_fc2")
+        logits_fc2 = self.linear(logits_fc1, 4096, regularizer,keep_rate, "logits_fc2")
         print("logits_fc2.shape", logits_fc2.shape)
         # -------------------------------------FC3------------------------------------------------------------
-        logits_fc3 = self.linear(logits_fc2, self.output_dim, regularizer, "logits_fc3")
+        logits_fc3 = self.linear(logits_fc2, self.output_dim, regularizer, keep_rate,"logits_fc3")
         print("logits_fc3.shape", logits_fc3.shape)
         return logits_fc3
 

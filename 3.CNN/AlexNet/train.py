@@ -15,7 +15,7 @@ print("train_size:",TRAIN_SIZE)
 
 MAX_EPOCH=20
 BATCH_SIZE=64
-LEARNING_RATE=0.001
+LEARNING_RATE=0.0001
 MODEL_SAVING_PATH="./saved_models/model.ckpt"
 
 
@@ -36,7 +36,7 @@ def _parse_data(example_proto):
     image = tf.reshape(tensor=image, shape=(250, 250, 3))
 
     # flip
-    #image = tf.image.random_flip_left_right(image=image)
+    image = tf.image.random_flip_left_right(image=image)
     # crop
     image = tf.image.resize_image_with_crop_or_pad(image=image, target_height=224, target_width=224)
     # trans to float
@@ -49,6 +49,7 @@ def train(tfrecords_list):
     X_p=tf.placeholder(dtype=tf.float32,shape=(None,224,224,3),name="X_p")
     y_p=tf.placeholder(dtype=tf.int64,shape=(None,),name="y_p")
     y_hot_p=tf.one_hot(indices=y_p,depth=2)
+    keep_rate_p=tf.placeholder(dtype=tf.float32,shape=(),name="keep_rate_p")
 
     # ----------------------------------------use dataset API--------------------------------------
     # 创建dataset对象
@@ -63,10 +64,10 @@ def train(tfrecords_list):
     #-----------------------------------------------------------------------------------------------
 
     #use regularizer
-    regularizer=tf.contrib.layers.l2_regularizer(0.0001)
+    regularizer=tf.contrib.layers.l2_regularizer(0.001)
     #model
     model=alex_net.AlexNet()
-    logits=model.forward(X_p,regularizer)           #[batch_size,10]
+    logits=model.forward(X_p,regularizer,keep_rate_p)           #[batch_size,10]
     pred=tf.argmax(input=logits,axis=-1)            #[batch_size,]
 
     # accuracy
@@ -92,7 +93,9 @@ def train(tfrecords_list):
             accus=[]
             for j in range(TRAIN_SIZE // BATCH_SIZE):
                 images,labels=sess.run(next_element)
-                _, l ,accu= sess.run(fetches=[optimizer, loss, accuracy],feed_dict={X_p: images,y_p: labels})
+                _, l ,accu= sess.run(
+                    fetches=[optimizer, loss, accuracy],
+                    feed_dict={X_p: images,y_p: labels,keep_rate_p:0.8})
                 #accu=accuracy_score(y_true=labels, y_pred=prediction)
                 accus.append(accu)
                 ls.append(l)
