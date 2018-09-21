@@ -12,6 +12,16 @@ class AlexNet():
         #basic environment
         #self.input_dim=INPUT_DIM
         self.output_dim=OUTPUT_DIM
+
+    def batch_norm(self,X,training):
+        normed=tf.layers.batch_normalization(
+            inputs=X,
+            axis=3,
+            training=training,
+            fused=True
+        )
+        return normed
+
     #pytorch-like
     def conv2d(self,X,out_channels, kernel_size, strides, padding,regularizer,name):
         logits_conv = tf.layers.conv2d(
@@ -20,56 +30,68 @@ class AlexNet():
             #kernel_initializer=tf.contrib.layers.xavier_initializer(),
             #bias_initializer=tf.initializers.constant(),
             kernel_regularizer=regularizer,bias_regularizer=regularizer,
-            activity_regularizer=None,
-            trainable=True,
-            name=name
+            activity_regularizer=None, trainable=True, name=name
         )
         return logits_conv
 
     # pytorch-like
     def linear(self, X, units,regularizer,keep_rate,name):
         logits_fc = tf.layers.dense(
-            inputs=X,
-            units=units,
-            activation=None,
-            use_bias=True,
+            inputs=X,units=units,activation=tf.nn.relu,use_bias=True,
             #kernel_initializer=tf.contrib.layers.xavier_initializer(),
             #bias_initializer=tf.initializers.constant(),
-            kernel_regularizer=regularizer,
-            bias_regularizer=regularizer,
-            activity_regularizer=None,
-            trainable=True,
-            name=name
+            kernel_regularizer=regularizer,bias_regularizer=regularizer,activity_regularizer=None,
+            trainable=True,name=name
         )
         #dropout
         logits_fc=tf.layers.dropout(inputs=logits_fc,rate=1-keep_rate)
         return logits_fc
 
 
-    def forward(self,X,regularizer,keep_rate):
+    def forward(self,X,regularizer,keep_rate,training):
         #-------------------------------------conv1------------------------------------------------------------
         logits_conv1=self.conv2d(X,96,(11,11),(4,4),"SAME",regularizer,"logits_conv1")
+        #batch_norm
+        logits_conv1=self.batch_norm(logits_conv1,training=training)
         #max pooling
         logits_conv1=tf.layers.max_pooling2d(inputs=logits_conv1,pool_size=(3,3),strides=(2,2),padding="VALID")
+        #activation
+        logits_conv1=tf.nn.relu(features=logits_conv1)
         print("logits_conv1.shape",logits_conv1.shape)
 
         # -------------------------------------conv2------------------------------------------------------------
         logits_conv2 = self.conv2d(logits_conv1, 256, (5, 5), (1, 1), "SAME", regularizer, "logits_conv2")
+        # batch_norm
+        logits_conv2 = self.batch_norm(logits_conv2, training=training)
         # max pooling
         logits_conv2 = tf.layers.max_pooling2d(inputs=logits_conv2, pool_size=(3, 3), strides=(2, 2), padding="VALID")
+        # activation
+        logits_conv2 = tf.nn.relu(features=logits_conv2)
         print("logits_conv2.shape", logits_conv2.shape)
 
         # -------------------------------------conv3------------------------------------------------------------3
         logits_conv3 = self.conv2d(logits_conv2, 384, (3, 3), (1, 1), "SAME", regularizer, "logits_conv3")
+        # batch_norm
+        logits_conv3 = self.batch_norm(logits_conv3, training=training)
+        # activation
+        logits_conv3 = tf.nn.relu(features=logits_conv3)
         print("logits_conv3.shape", logits_conv3.shape)
         # -------------------------------------conv4------------------------------------------------------------
         logits_conv4 = self.conv2d(logits_conv3, 384, (3, 3), (1, 1), "SAME", regularizer, "logits_conv4")
+        # batch_norm
+        logits_conv4 = self.batch_norm(logits_conv4, training=training)
+        # activation
+        logits_conv4 = tf.nn.relu(features=logits_conv4)
         print("logits_conv4.shape", logits_conv4.shape)
 
         # -------------------------------------conv5------------------------------------------------------------
         logits_conv5 = self.conv2d(logits_conv4, 256, (3, 3), (1, 1), "SAME", regularizer, "logits_conv5")
+        # batch_norm
+        logits_conv5 = self.batch_norm(logits_conv5, training=training)
         # max pooling
         logits_conv5 = tf.layers.max_pooling2d(inputs=logits_conv5, pool_size=(3, 3), strides=(2, 2), padding="VALID")
+        # activation
+        logits_conv5 = tf.nn.relu(features=logits_conv5)
         print("logits_conv5.shape", logits_conv5.shape)
 
         #reshape to connect to fully conected layer
@@ -83,8 +105,15 @@ class AlexNet():
         logits_fc2 = self.linear(logits_fc1, 4096, regularizer,keep_rate, "logits_fc2")
         print("logits_fc2.shape", logits_fc2.shape)
         # -------------------------------------FC3------------------------------------------------------------
-        logits_fc3 = self.linear(logits_fc2, self.output_dim, regularizer, keep_rate,"logits_fc3")
-        print("logits_fc3.shape", logits_fc3.shape)
+        logits_fc3 = tf.layers.dense(
+            inputs=logits_fc2, units=self.output_dim, activation=None, use_bias=True,
+            # kernel_initializer=tf.contrib.layers.xavier_initializer(),
+            # bias_initializer=tf.initializers.constant(),
+            kernel_regularizer=regularizer, bias_regularizer=regularizer, activity_regularizer=None,
+            trainable=True, name="logits_fc3"
+        )
+        #logits_fc3 = self.linear(logits_fc2, self.output_dim, regularizer, keep_rate,"logits_fc3")
+        #print("logits_fc3.shape", logits_fc3.shape)
         return logits_fc3
 
 

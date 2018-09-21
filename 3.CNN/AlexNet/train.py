@@ -67,7 +67,7 @@ def train(tfrecords_list):
     regularizer=tf.contrib.layers.l2_regularizer(0.001)
     #model
     model=alex_net.AlexNet()
-    logits=model.forward(X_p,regularizer,keep_rate_p)           #[batch_size,10]
+    logits=model.forward(X_p,regularizer,keep_rate_p,True)           #[batch_size,10]
     pred=tf.argmax(input=logits,axis=-1)            #[batch_size,]
 
     # accuracy
