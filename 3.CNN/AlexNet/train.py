@@ -82,7 +82,7 @@ def train(tfrecords_list):
     init=tf.global_variables_initializer()
 
     #Saver class
-    saver=tf.train.Saver()
+    saver=tf.train.Saver(max_to_keep=0)
 
     with tf.Session() as sess:
         sess.run(init)

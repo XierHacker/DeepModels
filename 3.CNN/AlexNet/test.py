@@ -14,7 +14,7 @@ TEST_SIZE=preprocessing.getTFRecordsAmount(tfFile="../../dataset/Dogs_VS_Cats/do
 print("test_size:",TEST_SIZE)
 
 
-MODEL_SAVINT_PATH="./saved_models/model.ckpt-8"
+MODEL_SAVINT_PATH="./saved_models/model.ckpt-"
 
 
 # 定义解析和预处理函数
@@ -41,7 +41,7 @@ def _parse_data(example_proto):
     return image, label
 
 
-def test(tfrecords_list):
+def test(tfrecords_list,model_path):
     #data placeholder
     X_p=tf.placeholder(dtype=tf.float32,shape=(None,224,224,3),name="X_p")
     y_p=tf.placeholder(dtype=tf.int64,shape=(None,),name="y_p")
@@ -81,7 +81,7 @@ def test(tfrecords_list):
     with tf.Session() as sess:
         sess.run(init)
         # restore
-        saver.restore(sess=sess, save_path=MODEL_SAVINT_PATH)
+        saver.restore(sess=sess, save_path=model_path)
         start_time=time.time()
         images,labels=sess.run(next_element)
         l ,accu= sess.run(
@@ -94,4 +94,7 @@ def test(tfrecords_list):
 
 
 if __name__=="__main__":
-    test(["../../dataset/Dogs_VS_Cats/dog_vs_cat_valid.tfrecords"])
+    for i in range(20):
+        print("Model ",i,":")
+        test(["../../dataset/Dogs_VS_Cats/dog_vs_cat_valid.tfrecords"],MODEL_SAVINT_PATH+str(i))
+        print()
